@@ -9,7 +9,7 @@ repository = "https://github.com/davidalber/geneagrapher-core"
 packages = [{include = "geneagrapher_core"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.7"
 
 
 [build-system]
