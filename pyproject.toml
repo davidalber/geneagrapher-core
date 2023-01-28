@@ -2,6 +2,7 @@
 name = "geneagrapher-core"
 version = "0.1.0"
 description = ""
+license = "MIT"
 authors = ["David Alber <alber.david@gmail.com>"]
 readme = "README.md"
 packages = [{include = "geneagrapher_core"}]
