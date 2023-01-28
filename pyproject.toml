@@ -5,6 +5,7 @@ description = ""
 license = "MIT"
 authors = ["David Alber <alber.david@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/davidalber/geneagrapher-core"
 packages = [{include = "geneagrapher_core"}]
 
 [tool.poetry.dependencies]
