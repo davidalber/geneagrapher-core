@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "geneagrapher-core"
+version = "0.1.0"
+description = ""
+authors = ["David Alber <alber.david@gmail.com>"]
+readme = "README.md"
+packages = [{include = "geneagrapher_core"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
