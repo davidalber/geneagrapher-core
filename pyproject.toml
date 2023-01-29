@@ -11,6 +11,7 @@ packages = [{include = "geneagrapher_core"}]
 [tool.poetry.dependencies]
 python = "^3.7"
 beautifulsoup4 = "^4.11.1"
+types-beautifulsoup4 = "^4.11.6.4"
 
 
 [tool.poetry.group.dev.dependencies]
