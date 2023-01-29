@@ -1,9 +1,14 @@
 .PHONY: format flake8 mypy test
 
+check: format-check flake8 mypy test
+
 # Code formatting
 format:
 	poetry run black geneagrapher_core tests
 fmt: format
+
+format-check:
+	poetry run black --check geneagrapher_core tests
 
 # Linting
 flake8:
