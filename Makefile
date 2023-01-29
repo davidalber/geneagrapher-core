@@ -1,3 +1,5 @@
+.PHONY: format flake8 mypy test
+
 # Code formatting
 format:
 	poetry run black geneagrapher_core tests
@@ -17,3 +19,5 @@ types: mypy
 # Tests
 test:
 	poetry run pytest tests
+
+all:
