@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import re
 from typing import List, NewType, Optional, TypedDict
 import urllib.request
 
@@ -39,7 +40,8 @@ def fetch_document(rid: RecordId) -> BeautifulSoup:
 def get_name(soup: BeautifulSoup) -> str:
     """Extract the mathematician name."""
     el = soup.find("h2")
-    return el.getText(strip=True) if el is not None else ""
+    name = el.getText(strip=True) if el is not None else ""
+    return re.sub(" {2,}", " ", name)  # remove redundant whitespace
 
 
 def get_institution(soup: BeautifulSoup) -> Optional[str]:
