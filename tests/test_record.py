@@ -1,5 +1,39 @@
 from geneagrapher_core.record import fetch_document, get_record
+
+from bs4 import BeautifulSoup
+from glob import glob
+import os
+import tomllib
 from unittest.mock import MagicMock, patch, sentinel as s
+
+
+CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+SEARCH_DIR = os.path.join(CURR_DIR, "testdata_records")
+
+
+def load_toml(filename):
+    with open(filename, "rb") as f:
+        return tomllib.load(f)
+
+
+def load_soup(filename):
+    with open(filename, "r") as f:
+        return BeautifulSoup(f, "html.parser")
+
+
+def load_record_test(record_id):
+    path_stub = os.path.join(SEARCH_DIR, record_id)
+    return load_soup(f"{path_stub}.html"), load_toml(f"{path_stub}.toml")
+
+
+def pytest_generate_tests(metafunc):
+    if "test_record_ids" in metafunc.fixturenames:
+        # Generate a list of the IDs of test records in the test data
+        # directory.
+        files = glob(os.path.join(SEARCH_DIR, "*.toml"))
+        metafunc.parametrize(
+            "test_record_ids", [f.removesuffix(".toml") for f in files]
+        )
 
 
 @patch("geneagrapher_core.record.get_ancestors")
