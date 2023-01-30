@@ -6,6 +6,7 @@ check: format-check flake8 mypy test
 format:
 	poetry run black geneagrapher_core tests
 fmt: format
+black: format
 
 format-check:
 	poetry run black --check geneagrapher_core tests
