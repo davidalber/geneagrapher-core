@@ -37,7 +37,8 @@ def fetch_document(rid: RecordId) -> BeautifulSoup:
 
 
 def get_name(soup: BeautifulSoup) -> str:
-    return ""
+    """Extract the mathematician name."""
+    return soup.find("h2").getText(strip=True)
 
 
 def get_institution(soup: BeautifulSoup) -> Optional[str]:

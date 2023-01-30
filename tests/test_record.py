@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from glob import glob
 import os
 import tomllib
+from geneagrapher_core.record import fetch_document, get_name, get_record
 from unittest.mock import MagicMock, patch, sentinel as s
 
 
@@ -80,3 +81,8 @@ def test_fetch_document(m_urllib, m_bs) -> None:
         "https://www.mathgenealogy.org/id.php?id=sentinel.rid"
     )
     m_bs.assert_called_once_with(m_page, "html.parser")
+
+
+def test_get_name(test_record_ids) -> None:
+    soup, expected = load_record_test(test_record_ids)
+    assert get_name(soup) == expected["name"]
