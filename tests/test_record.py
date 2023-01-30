@@ -1,4 +1,4 @@
-from geneagrapher_core.record import fetch_document, get_record
+from geneagrapher_core.record import fetch_document, get_name, get_record
 
 from bs4 import BeautifulSoup
 from glob import glob
@@ -10,7 +10,6 @@ except ModuleNotFoundError:
     # tomllib is only in Python >= 3.11
     # fall back to tomli
     import tomli as tomllib  # type: ignore
-from geneagrapher_core.record import fetch_document, get_name, get_record
 from unittest.mock import MagicMock, patch, sentinel as s
 
 
