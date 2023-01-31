@@ -1,4 +1,9 @@
-from geneagrapher_core.record import fetch_document, get_name, get_record
+from geneagrapher_core.record import (
+    fetch_document,
+    get_institution,
+    get_name,
+    get_record,
+)
 
 from bs4 import BeautifulSoup
 from glob import glob
@@ -91,3 +96,8 @@ def test_fetch_document(m_urllib, m_bs) -> None:
 def test_get_name(test_record_ids) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_name(soup) == expected["name"]
+
+
+def test_get_institution(test_record_ids) -> None:
+    soup, expected = load_record_test(test_record_ids)
+    assert get_institution(soup) == expected.get("institution")

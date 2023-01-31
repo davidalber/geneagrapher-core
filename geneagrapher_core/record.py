@@ -45,7 +45,17 @@ def get_name(soup: BeautifulSoup) -> str:
 
 
 def get_institution(soup: BeautifulSoup) -> Optional[str]:
-    ...
+    """Return institution name (or None, if there is no institution name)."""
+    for inst in soup.findAll(
+        "div", style="line-height: 30px; text-align: center; margin-bottom: 1ex"
+    ):
+        try:
+            institution = inst.find("span").find("span").text
+            if institution != "":
+                return institution
+        except AttributeError:
+            pass
+    return None
 
 
 def get_year(soup: BeautifulSoup) -> Optional[int]:
