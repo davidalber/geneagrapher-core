@@ -59,7 +59,7 @@ def get_record(record_id: RecordId, cache: Optional[Cache] = None) -> Optional[R
     if not has_record(soup):
         record = None
     else:
-        record: Record = {
+        record = {
             "id": record_id,
             "name": get_name(soup),
             "institution": get_institution(soup),
