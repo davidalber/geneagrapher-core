@@ -1,5 +1,6 @@
 from geneagrapher_core.record import (
     fetch_document,
+    get_ancestors,
     get_descendants,
     get_institution,
     get_name,
@@ -113,3 +114,8 @@ def test_get_year(test_record_ids) -> None:
 def test_get_descendants(test_record_ids) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_descendants(soup) == expected["descendants"]
+
+
+def test_get_ancestors(test_record_ids) -> None:
+    soup, expected = load_record_test(test_record_ids)
+    assert get_ancestors(soup) == expected["ancestors"]

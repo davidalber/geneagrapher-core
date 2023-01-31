@@ -97,4 +97,14 @@ def get_descendants(soup: BeautifulSoup) -> List[int]:
 
 
 def get_ancestors(soup: BeautifulSoup) -> List[int]:
-    return []
+    """Return the set of advisors.
+
+    Rarely, a record has multiple groups of advisors (e.g.,
+    https://www.mathgenealogy.org/id.php?id=17864). In this case,
+    capture all of the advisors from all groups..
+    """
+    return [
+        extract_id(info.findNext())
+        for info in soup.findAll(string=re.compile("Advisor"))
+        if "Advisor: Unknown" not in info
+    ]
