@@ -32,8 +32,11 @@ up and try again."
     )
 
 
-def get_record(record_id: RecordId) -> Record:
+def get_record(record_id: RecordId) -> Optional[Record]:
     soup: BeautifulSoup = fetch_document(record_id)
+
+    if not has_record(soup):
+        return None
 
     result: Record = {
         "id": record_id,
