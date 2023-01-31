@@ -2,4 +2,4 @@ name = "Laonikos Chalkokondyles"
 institution = "University of Crete"
 # year is null
 descendants = []
-ancestors = [ 131575, 157013 ]
+advisors = [ 131575, 157013 ]

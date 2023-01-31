@@ -2,5 +2,4 @@ name = "Eberhard Schrader"
 institution = "Georg-August-Universität Göttingen"
 year = 1860
 descendants = []
-
-ancestors = [ 145778 ]
+advisors = [ 145778 ]

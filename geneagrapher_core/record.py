@@ -12,7 +12,7 @@ class Record(TypedDict):
     institution: Optional[str]
     year: Optional[int]
     descendants: List[int]
-    ancestors: List[int]
+    advisors: List[int]
 
 
 def get_record(record_id: RecordId) -> Record:
@@ -24,7 +24,7 @@ def get_record(record_id: RecordId) -> Record:
         "institution": get_institution(soup),
         "year": get_year(soup),
         "descendants": get_descendants(soup),
-        "ancestors": get_ancestors(soup),
+        "advisors": get_advisors(soup),
     }
 
     return result
@@ -96,7 +96,7 @@ def get_descendants(soup: BeautifulSoup) -> List[int]:
         return []
 
 
-def get_ancestors(soup: BeautifulSoup) -> List[int]:
+def get_advisors(soup: BeautifulSoup) -> List[int]:
     """Return the set of advisors.
 
     Rarely, a record has multiple groups of advisors (e.g.,

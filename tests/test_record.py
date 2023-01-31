@@ -1,6 +1,6 @@
 from geneagrapher_core.record import (
     fetch_document,
-    get_ancestors,
+    get_advisors,
     get_descendants,
     get_institution,
     get_name,
@@ -50,7 +50,7 @@ def pytest_generate_tests(metafunc):
         )
 
 
-@patch("geneagrapher_core.record.get_ancestors")
+@patch("geneagrapher_core.record.get_advisors")
 @patch("geneagrapher_core.record.get_descendants")
 @patch("geneagrapher_core.record.get_year")
 @patch("geneagrapher_core.record.get_institution")
@@ -62,7 +62,7 @@ def test_get_record(
     m_get_institution,
     m_get_year,
     m_get_descendants,
-    m_get_ancestors,
+    m_get_advisors,
 ) -> None:
     m_soup = m_fetch_document.return_value
 
@@ -72,7 +72,7 @@ def test_get_record(
         "institution": m_get_institution.return_value,
         "year": m_get_year.return_value,
         "descendants": m_get_descendants.return_value,
-        "ancestors": m_get_ancestors.return_value,
+        "advisors": m_get_advisors.return_value,
     }
 
     m_fetch_document.assert_called_once_with(s.rid)
@@ -80,7 +80,7 @@ def test_get_record(
     m_get_institution.assert_called_once_with(m_soup)
     m_get_year.assert_called_once_with(m_soup)
     m_get_descendants.assert_called_once_with(m_soup)
-    m_get_ancestors.assert_called_once_with(m_soup)
+    m_get_advisors.assert_called_once_with(m_soup)
 
 
 @patch("geneagrapher_core.record.BeautifulSoup")
@@ -116,6 +116,6 @@ def test_get_descendants(test_record_ids) -> None:
     assert get_descendants(soup) == expected["descendants"]
 
 
-def test_get_ancestors(test_record_ids) -> None:
+def test_get_advisors(test_record_ids) -> None:
     soup, expected = load_record_test(test_record_ids)
-    assert get_ancestors(soup) == expected["ancestors"]
+    assert get_advisors(soup) == expected["advisors"]
