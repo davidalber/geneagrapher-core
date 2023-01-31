@@ -15,7 +15,7 @@ class Record(TypedDict):
     advisors: List[int]
 
 
-def has_record(soup):
+def has_record(soup: BeautifulSoup) -> bool:
     """Return True if the input tree contains a mathematician record
     and False otherwise.
     """
@@ -23,8 +23,10 @@ def has_record(soup):
         # This is received, for instance, by going to
         # https://www.mathgenealogy.org/id.php?id=9999999999999999999999999.
         return False
+
     return (
-        soup.p.string
+        soup.p is not None
+        and soup.p.string
         != "You have specified an ID that does not exist in the database. Please back \
 up and try again."
     )
