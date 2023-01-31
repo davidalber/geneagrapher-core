@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 import re
 from typing import List, NewType, Optional, TypedDict
 import urllib.request
@@ -82,8 +82,18 @@ def get_year(soup: BeautifulSoup) -> Optional[int]:
     return None
 
 
+def extract_id(tag: Tag) -> int:
+    """Extract the ID from a tag with form <a href="id.php?id=7401">."""
+    return int(tag.attrs["href"].split("=")[-1])
+
+
 def get_descendants(soup: BeautifulSoup) -> List[int]:
-    return []
+    """Return the list of descendants."""
+    table = soup.find("table")
+    if isinstance(table, Tag):
+        return [extract_id(info) for info in table.findAll("a")]
+    else:
+        return []
 
 
 def get_ancestors(soup: BeautifulSoup) -> List[int]:
