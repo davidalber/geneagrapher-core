@@ -1,4 +1,5 @@
 from geneagrapher_core.record import (
+    CacheResult,
     fetch_document,
     get_advisors,
     get_descendants,
@@ -58,6 +59,7 @@ def test_has_record(test_record_ids) -> None:
 
 
 @pytest.mark.parametrize("has_record", [False, True])
+@pytest.mark.parametrize("cache_hit", [False, True])
 @patch("geneagrapher_core.record.get_advisors")
 @patch("geneagrapher_core.record.get_descendants")
 @patch("geneagrapher_core.record.get_year")
@@ -74,37 +76,58 @@ def test_get_record(
     m_get_descendants,
     m_get_advisors,
     has_record,
+    cache_hit,
 ) -> None:
     m_has_record.return_value = has_record
     m_soup = m_fetch_document.return_value
 
-    record = get_record(s.rid)
-    m_fetch_document.assert_called_once_with(s.rid)
-    m_has_record.assert_called_once_with(m_soup)
+    m_cache = MagicMock()
+    m_cache.get.return_value = (
+        (CacheResult.HIT, s.cache_record) if cache_hit else (CacheResult.MISS, None)
+    )
 
-    if has_record:
-        assert record == {
-            "id": s.rid,
-            "name": m_get_name.return_value,
-            "institution": m_get_institution.return_value,
-            "year": m_get_year.return_value,
-            "descendants": m_get_descendants.return_value,
-            "advisors": m_get_advisors.return_value,
-        }
+    record = get_record(s.rid, m_cache)
 
-        m_get_name.assert_called_once_with(m_soup)
-        m_get_institution.assert_called_once_with(m_soup)
-        m_get_year.assert_called_once_with(m_soup)
-        m_get_descendants.assert_called_once_with(m_soup)
-        m_get_advisors.assert_called_once_with(m_soup)
-    else:
-        assert record is None
-
+    if cache_hit:
+        assert record is s.cache_record
+        m_fetch_document.assert_not_called()
+        m_has_record.assert_not_called()
         m_get_name.assert_not_called()
         m_get_institution.assert_not_called()
         m_get_year.assert_not_called()
         m_get_descendants.assert_not_called()
         m_get_advisors.assert_not_called()
+        m_cache.set.assert_not_called()
+
+    else:
+        m_fetch_document.assert_called_once_with(s.rid)
+        m_has_record.assert_called_once_with(m_soup)
+
+        if has_record:
+            assert record == {
+                "id": s.rid,
+                "name": m_get_name.return_value,
+                "institution": m_get_institution.return_value,
+                "year": m_get_year.return_value,
+                "descendants": m_get_descendants.return_value,
+                "advisors": m_get_advisors.return_value,
+            }
+
+            m_get_name.assert_called_once_with(m_soup)
+            m_get_institution.assert_called_once_with(m_soup)
+            m_get_year.assert_called_once_with(m_soup)
+            m_get_descendants.assert_called_once_with(m_soup)
+            m_get_advisors.assert_called_once_with(m_soup)
+        else:
+            assert record is None
+
+            m_get_name.assert_not_called()
+            m_get_institution.assert_not_called()
+            m_get_year.assert_not_called()
+            m_get_descendants.assert_not_called()
+            m_get_advisors.assert_not_called()
+
+        m_cache.set.assert_called_once_with(s.rid, record)
 
 
 @patch("geneagrapher_core.record.BeautifulSoup")

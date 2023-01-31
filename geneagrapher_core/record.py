@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup, Tag
+from enum import Enum, auto
 import re
-from typing import List, NewType, Optional, TypedDict
+from typing import List, NewType, Optional, Protocol, Tuple, TypedDict
 import urllib.request
 
 RecordId = NewType("RecordId", int)
@@ -13,6 +14,21 @@ class Record(TypedDict):
     year: Optional[int]
     descendants: List[int]
     advisors: List[int]
+
+
+class CacheResult(Enum):
+    HIT = auto()
+    MISS = auto()
+
+
+class Cache(Protocol):
+    """This defines an interface that cache objects passed in must implement."""
+
+    def get(self, id: RecordId) -> Tuple[CacheResult, Optional[Record]]:
+        ...
+
+    def set(self, id: RecordId, value: Optional[Record]) -> None:
+        ...
 
 
 def has_record(soup: BeautifulSoup) -> bool:
@@ -32,20 +48,28 @@ up and try again."
     )
 
 
-def get_record(record_id: RecordId) -> Optional[Record]:
+def get_record(record_id: RecordId, cache: Optional[Cache] = None) -> Optional[Record]:
+    if cache:
+        (status, record) = cache.get(record_id)
+        if status is CacheResult.HIT:
+            return record
+
     soup: BeautifulSoup = fetch_document(record_id)
 
     if not has_record(soup):
-        return None
+        record = None
+    else:
+        record: Record = {
+            "id": record_id,
+            "name": get_name(soup),
+            "institution": get_institution(soup),
+            "year": get_year(soup),
+            "descendants": get_descendants(soup),
+            "advisors": get_advisors(soup),
+        }
 
-    record: Record = {
-        "id": record_id,
-        "name": get_name(soup),
-        "institution": get_institution(soup),
-        "year": get_year(soup),
-        "descendants": get_descendants(soup),
-        "advisors": get_advisors(soup),
-    }
+    if cache:
+        cache.set(record_id, record)
 
     return record
 
