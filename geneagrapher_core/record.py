@@ -15,6 +15,21 @@ class Record(TypedDict):
     advisors: List[int]
 
 
+def has_record(soup):
+    """Return True if the input tree contains a mathematician record
+    and False otherwise.
+    """
+    if soup.string == "Non-numeric id supplied. Aborting.":
+        # This is received, for instance, by going to
+        # https://www.mathgenealogy.org/id.php?id=9999999999999999999999999.
+        return False
+    return (
+        soup.p.string
+        != "You have specified an ID that does not exist in the database. Please back \
+up and try again."
+    )
+
+
 def get_record(record_id: RecordId) -> Record:
     soup: BeautifulSoup = fetch_document(record_id)
 

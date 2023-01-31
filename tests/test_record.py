@@ -6,6 +6,7 @@ from geneagrapher_core.record import (
     get_name,
     get_record,
     get_year,
+    has_record,
 )
 
 from bs4 import BeautifulSoup
@@ -48,6 +49,11 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize(
             "test_record_ids", [f.removesuffix(".toml") for f in files]
         )
+
+
+def test_has_record(test_record_ids) -> None:
+    soup, expected = load_record_test(test_record_ids)
+    assert has_record(soup) is expected["is_valid"]
 
 
 @patch("geneagrapher_core.record.get_advisors")
