@@ -3,6 +3,7 @@ from geneagrapher_core.record import (
     get_institution,
     get_name,
     get_record,
+    get_year,
 )
 
 from bs4 import BeautifulSoup
@@ -101,3 +102,8 @@ def test_get_name(test_record_ids) -> None:
 def test_get_institution(test_record_ids) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_institution(soup) == expected.get("institution")
+
+
+def test_get_year(test_record_ids) -> None:
+    soup, expected = load_record_test(test_record_ids)
+    assert get_year(soup) == expected.get("year")

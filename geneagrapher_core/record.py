@@ -59,7 +59,27 @@ def get_institution(soup: BeautifulSoup) -> Optional[str]:
 
 
 def get_year(soup: BeautifulSoup) -> Optional[int]:
-    ...
+    """Return graduation year (or None, if there is no graduation year).
+
+    Rarely, a record has multiple years listed (e.g.,
+    https://www.genealogy.math.ndsu.nodak.edu/id.php?id=131575). In
+    this case, return the first year in the record.
+    """
+    for inst_year in soup.findAll(
+        "div", style="line-height: 30px; text-align: center; margin-bottom: 1ex"
+    ):
+        try:
+            year = inst_year.find("span").contents[-1].strip()
+            if year != "":
+                year = year.split(",")[  # this addresses records with multiple years
+                    0
+                ].strip()
+                if year.isdigit():
+                    return int(year)
+        except AttributeError:
+            pass
+
+    return None
 
 
 def get_descendants(soup: BeautifulSoup) -> List[int]:
