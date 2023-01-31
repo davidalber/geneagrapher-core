@@ -19,7 +19,7 @@ lint: flake8
 
 # Type enforcement
 mypy:
-	poetry run mypy geneagrapher_core/record.py tests/test_record.py
+	poetry run mypy geneagrapher_core tests
 types: mypy
 
 # Tests
