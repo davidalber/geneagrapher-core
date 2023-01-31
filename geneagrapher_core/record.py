@@ -40,13 +40,13 @@ def fetch_document(rid: RecordId) -> BeautifulSoup:
 def get_name(soup: BeautifulSoup) -> str:
     """Extract the mathematician name."""
     el = soup.find("h2")
-    name = el.getText(strip=True) if el is not None else ""
+    name = el.get_text(strip=True) if el is not None else ""
     return re.sub(" {2,}", " ", name)  # remove redundant whitespace
 
 
 def get_institution(soup: BeautifulSoup) -> Optional[str]:
     """Return institution name (or None, if there is no institution name)."""
-    for inst in soup.findAll(
+    for inst in soup.find_all(
         "div", style="line-height: 30px; text-align: center; margin-bottom: 1ex"
     ):
         try:
@@ -65,7 +65,7 @@ def get_year(soup: BeautifulSoup) -> Optional[int]:
     https://www.genealogy.math.ndsu.nodak.edu/id.php?id=131575). In
     this case, return the first year in the record.
     """
-    for inst_year in soup.findAll(
+    for inst_year in soup.find_all(
         "div", style="line-height: 30px; text-align: center; margin-bottom: 1ex"
     ):
         try:
@@ -91,7 +91,7 @@ def get_descendants(soup: BeautifulSoup) -> List[int]:
     """Return the list of descendants."""
     table = soup.find("table")
     if isinstance(table, Tag):
-        return [extract_id(info) for info in table.findAll("a")]
+        return [extract_id(info) for info in table.find_all("a")]
     else:
         return []
 
@@ -104,7 +104,7 @@ def get_advisors(soup: BeautifulSoup) -> List[int]:
     capture all of the advisors from all groups..
     """
     return [
-        extract_id(info.findNext())
-        for info in soup.findAll(string=re.compile("Advisor"))
+        extract_id(info.find_next())
+        for info in soup.find_all(string=re.compile("Advisor"))
         if "Advisor: Unknown" not in info
     ]
