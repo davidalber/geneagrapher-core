@@ -38,7 +38,7 @@ def get_record(record_id: RecordId) -> Optional[Record]:
     if not has_record(soup):
         return None
 
-    result: Record = {
+    record: Record = {
         "id": record_id,
         "name": get_name(soup),
         "institution": get_institution(soup),
@@ -47,7 +47,7 @@ def get_record(record_id: RecordId) -> Optional[Record]:
         "advisors": get_advisors(soup),
     }
 
-    return result
+    return record
 
 
 def fetch_document(rid: RecordId) -> BeautifulSoup:
