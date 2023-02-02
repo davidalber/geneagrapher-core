@@ -5,7 +5,7 @@ from geneagrapher_core.record import (
     get_descendants,
     get_institution,
     get_name,
-    get_record,
+    get_record_inner,
     get_year,
     has_record,
 )
@@ -21,7 +21,7 @@ except ModuleNotFoundError:
     # tomllib is only in Python >= 3.11
     # fall back to tomli
     import tomli as tomllib  # type: ignore
-from unittest.mock import MagicMock, patch, sentinel as s
+from unittest.mock import AsyncMock, patch, sentinel as s
 
 
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +58,7 @@ def test_has_record(test_record_ids) -> None:
     assert has_record(soup) is expected["is_valid"]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("has_record", [False, True])
 @pytest.mark.parametrize("cache_hit", [False, True])
 @patch("geneagrapher_core.record.get_advisors")
@@ -67,7 +68,7 @@ def test_has_record(test_record_ids) -> None:
 @patch("geneagrapher_core.record.get_name")
 @patch("geneagrapher_core.record.has_record")
 @patch("geneagrapher_core.record.fetch_document")
-def test_get_record(
+async def test_get_record_inner(
     m_fetch_document,
     m_has_record,
     m_get_name,
@@ -81,12 +82,12 @@ def test_get_record(
     m_has_record.return_value = has_record
     m_soup = m_fetch_document.return_value
 
-    m_cache = MagicMock()
+    m_cache = AsyncMock()
     m_cache.get.return_value = (
         (CacheResult.HIT, s.cache_record) if cache_hit else (CacheResult.MISS, None)
     )
 
-    record = get_record(s.rid, m_cache)
+    record = await get_record_inner(s.rid, s.client_session, m_cache)
 
     if cache_hit:
         assert record is s.cache_record
@@ -100,7 +101,7 @@ def test_get_record(
         m_cache.set.assert_not_called()
 
     else:
-        m_fetch_document.assert_called_once_with(s.rid)
+        m_fetch_document.assert_called_once_with(s.rid, s.client_session)
         m_has_record.assert_called_once_with(m_soup)
 
         if has_record:
@@ -130,17 +131,16 @@ def test_get_record(
         m_cache.set.assert_called_once_with(s.rid, record)
 
 
+@pytest.mark.asyncio
 @patch("geneagrapher_core.record.BeautifulSoup")
-@patch("geneagrapher_core.record.urllib")
-def test_fetch_document(m_urllib, m_bs) -> None:
-    m_page = MagicMock()
-    m_urllib.request.urlopen.return_value.__enter__.return_value = m_page
+@patch("geneagrapher_core.record.ClientSession")
+async def test_fetch_document(m_client_session, m_bs) -> None:
+    m_page = AsyncMock()
+    m_client_session.get.return_value.__aenter__.return_value = m_page
 
-    assert fetch_document(s.rid) == m_bs.return_value
-    m_urllib.request.urlopen.assert_called_once_with(
-        "https://www.mathgenealogy.org/id.php?id=sentinel.rid"
-    )
-    m_bs.assert_called_once_with(m_page, "html.parser")
+    assert await fetch_document(s.rid, m_client_session) == m_bs.return_value
+    m_client_session.get.assert_called_once_with("/id.php?id=sentinel.rid")
+    m_bs.assert_called_once_with(m_page.text.return_value, "html.parser")
 
 
 def test_get_name(test_record_ids) -> None:

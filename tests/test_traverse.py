@@ -2,7 +2,7 @@ from geneagrapher_core.traverse import LifecycleTracking, build_graph
 from geneagrapher_core.record import RecordId
 
 import pytest
-from unittest.mock import MagicMock, call, patch, sentinel as s
+from unittest.mock import AsyncMock, call, patch, sentinel as s
 
 
 class TestLifecycleTracking:
@@ -14,6 +14,33 @@ class TestLifecycleTracking:
         assert t._report_back == s.report_back
 
     @pytest.mark.parametrize(
+        "todo,doing,expected",
+        [
+            ([], [], True),
+            ([s.rid1], [], False),
+            ([], [s.rid1], False),
+            ([s.rid1], [s.rid2], False),
+        ],
+    )
+    def test_all_done(self, todo, doing, expected) -> None:
+        t = LifecycleTracking(todo)
+        t._doing = doing
+        assert t.all_done is expected
+
+    @pytest.mark.parametrize(
+        "todo,expected",
+        [
+            ([], 0),
+            ([s.rid1], 1),
+            ([s.rid1, s.rid2], 2),
+        ],
+    )
+    def test_num_todo(self, todo, expected):
+        t = LifecycleTracking(todo)
+        assert t.num_todo == expected
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
         "start_nodes,new_node,final_todo",
         [
             ([1, 2], 1, {1, 2}),
@@ -21,50 +48,52 @@ class TestLifecycleTracking:
         ],
     )
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    def test_create(self, m_report_back, start_nodes, new_node, final_todo) -> None:
+    async def test_create(
+        self, m_report_back, start_nodes, new_node, final_todo
+    ) -> None:
         t = LifecycleTracking(start_nodes)
-        t.create(new_node)
+        await t.create(new_node)
         assert t.todo == final_todo
 
-    @patch("geneagrapher_core.traverse.LifecycleTracking.doing")
-    def test_start_next(self, m_doing) -> None:
+    @pytest.mark.asyncio
+    async def test_start_next(self) -> None:
         start_nodes = [RecordId(1), RecordId(2)]
         t = LifecycleTracking(start_nodes)
 
-        next_rid = t.start_next()
+        next_rid = await t.start_next()
         assert next_rid in start_nodes
         assert t.todo == set(start_nodes) - set([next_rid])
-        m_doing.assert_called_once_with(next_rid)
+        assert t._doing == set([next_rid])
 
+    @pytest.mark.asyncio
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    def test_doing(self, m_report_back) -> None:
-        t = LifecycleTracking([s.sn1])
-        t.doing(s.sn2)
-        assert t._doing == {s.sn2}
-        m_report_back.assert_called_once_with()
-
-    @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    def test_done(self, m_report_back) -> None:
+    async def test_done(self, m_report_back) -> None:
         t = LifecycleTracking([s.sn1])
         t._doing.add(s.sn2)
 
-        t.done(s.sn2)
+        await t.done(s.sn2)
         assert t._doing == set()
         assert t._done == {s.sn2}
         m_report_back.assert_called_once_with()
 
-    @pytest.mark.parametrize("report_back", [None, MagicMock()])
-    def test_report_back(self, report_back) -> None:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("report_back", [None, AsyncMock()])
+    async def test_report_back(self, report_back) -> None:
         t = LifecycleTracking([s.sn1], report_back)
 
-        assert t.report_back() is None
+        assert await t.report_back() is None
         if report_back is not None:
             report_back.assert_called_once_with(1, 0, 0)
 
 
-@patch("geneagrapher_core.traverse.get_record")
-def test_build_graph(m_get_record) -> None:
-    m_report_progress = MagicMock()
+@pytest.mark.asyncio
+@patch("geneagrapher_core.traverse.get_record_inner")
+@patch("geneagrapher_core.traverse.ClientSession")
+async def test_build_graph(m_client_session, m_get_record_inner) -> None:
+    m_session = AsyncMock()
+    m_client_session.return_value.__aenter__.return_value = m_session
+
+    m_report_progress = AsyncMock()
     start_nodes = [RecordId(1), RecordId(2)]
 
     testdata = {
@@ -86,7 +115,9 @@ def test_build_graph(m_get_record) -> None:
         },
         5: None,
     }
-    m_get_record.side_effect = lambda record_id, cache: testdata[record_id]
+    m_get_record_inner.side_effect = lambda record_id, client, cache: testdata[
+        record_id
+    ]
 
     expected = {
         "start_nodes": start_nodes,
@@ -98,11 +129,12 @@ def test_build_graph(m_get_record) -> None:
         },
     }
 
-    assert build_graph(start_nodes, s.cache, m_report_progress) == expected
-    assert m_get_record.call_args_list == [
-        call(1, s.cache),
-        call(2, s.cache),
-        call(3, s.cache),
-        call(4, s.cache),
-        call(5, s.cache),
+    assert await build_graph(start_nodes, s.cache, m_report_progress) == expected
+    m_client_session.assert_called_once_with("https://www.mathgenealogy.org")
+    assert m_get_record_inner.call_args_list == [
+        call(1, m_session, s.cache),
+        call(2, m_session, s.cache),
+        call(3, m_session, s.cache),
+        call(4, m_session, s.cache),
+        call(5, m_session, s.cache),
     ]

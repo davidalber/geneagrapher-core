@@ -1,8 +1,8 @@
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup, Tag
 from enum import Enum, auto
 import re
 from typing import List, NewType, Optional, Protocol, Tuple, TypedDict
-import urllib.request
 
 RecordId = NewType("RecordId", int)
 
@@ -24,10 +24,10 @@ class CacheResult(Enum):
 class Cache(Protocol):
     """This defines an interface that cache objects passed in must implement."""
 
-    def get(self, id: RecordId) -> Tuple[CacheResult, Optional[Record]]:
+    async def get(self, id: RecordId) -> Tuple[CacheResult, Optional[Record]]:
         ...
 
-    def set(self, id: RecordId, value: Optional[Record]) -> None:
+    async def set(self, id: RecordId, value: Optional[Record]) -> None:
         ...
 
 
@@ -48,13 +48,22 @@ up and try again."
     )
 
 
-def get_record(record_id: RecordId, cache: Optional[Cache] = None) -> Optional[Record]:
+async def get_record(
+    record_id: RecordId, cache: Optional[Cache] = None
+) -> Optional[Record]:
+    async with ClientSession("https://www.mathgenealogy.org") as client:
+        return await get_record_inner(record_id, client, cache)
+
+
+async def get_record_inner(
+    record_id: RecordId, client: ClientSession, cache: Optional[Cache] = None
+) -> Optional[Record]:
     if cache:
-        (status, record) = cache.get(record_id)
+        (status, record) = await cache.get(record_id)
         if status is CacheResult.HIT:
             return record
 
-    soup: BeautifulSoup = fetch_document(record_id)
+    soup: BeautifulSoup = await fetch_document(record_id, client)
 
     if not has_record(soup):
         record = None
@@ -69,16 +78,14 @@ def get_record(record_id: RecordId, cache: Optional[Cache] = None) -> Optional[R
         }
 
     if cache:
-        cache.set(record_id, record)
+        await cache.set(record_id, record)
 
     return record
 
 
-def fetch_document(rid: RecordId) -> BeautifulSoup:
-    with urllib.request.urlopen(
-        f"https://www.mathgenealogy.org/id.php?id={rid}"
-    ) as page:
-        return BeautifulSoup(page, "html.parser")
+async def fetch_document(rid: RecordId, client: ClientSession) -> BeautifulSoup:
+    async with client.get(f"/id.php?id={rid}") as resp:
+        return BeautifulSoup(await resp.text(), "html.parser")
 
 
 def get_name(soup: BeautifulSoup) -> str:
