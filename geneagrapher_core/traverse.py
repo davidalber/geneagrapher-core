@@ -89,7 +89,6 @@ async def build_graph(
         "nodes": {},
     }
 
-    tasks = set()
     continue_event = asyncio.Event()
 
     async def fetch_and_process(record_id, client, cache):
@@ -105,10 +104,7 @@ async def build_graph(
                     # loop below.
                     continue_event.set()
 
-        # Remove the strong reference to this task.
-        tasks.discard(asyncio.current_task())
-
-        if len(tasks) == 0 and tracking.all_done:
+        if tracking.all_done:
             # There's no more work to do. Signal the loop below.
             continue_event.set()
 
@@ -119,7 +115,7 @@ async def build_graph(
 
                 # Create a task to fetch and process the `record_id`
                 # record.
-                tasks.add(tg.create_task(fetch_and_process(record_id, client, cache)))
+                tg.create_task(fetch_and_process(record_id, client, cache))
 
                 if tracking.num_todo == 0:
                     # There's nothing left to do for now. Wait for
