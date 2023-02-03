@@ -8,6 +8,7 @@ from geneagrapher_core.record import (
 
 from aiohttp import ClientSession
 import asyncio
+import functools
 from typing import Awaitable, Callable, List, Optional
 
 
@@ -24,7 +25,9 @@ class LifecycleTracking:
     def __init__(
         self,
         start_nodes: List[RecordId],
-        report_back: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
+        report_back: Optional[
+            Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
+        ] = None,
     ):
         self.todo: set[RecordId] = set(start_nodes)
         self._doing: set[RecordId] = set()
@@ -76,14 +79,14 @@ class LifecycleTracking:
 async def build_graph(
     start_nodes: List[RecordId],
     cache: Optional[Cache] = None,
-    report_progress: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
+    report_progress: Optional[
+        Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
+    ] = None,
 ) -> Geneagraph:
     """Build a complete geneagraph using the `start_nodes` as the
     graph's leaf nodes. This function traverses in the direction of
     ancestors.
     """
-    tracking = LifecycleTracking(start_nodes, report_progress)
-
     ggraph: Geneagraph = {
         "start_nodes": start_nodes,
         "nodes": {},
@@ -108,8 +111,12 @@ async def build_graph(
             # There's no more work to do. Signal the loop below.
             continue_event.set()
 
-    async with ClientSession("https://www.mathgenealogy.org") as client:
-        async with asyncio.TaskGroup() as tg:
+    async with asyncio.TaskGroup() as tg:
+        tracking = LifecycleTracking(
+            start_nodes,
+            None if report_progress is None else functools.partial(report_progress, tg),
+        )
+        async with ClientSession("https://www.mathgenealogy.org") as client:
             while tracking.num_todo > 0:
                 record_id = await tracking.start_next()
 
