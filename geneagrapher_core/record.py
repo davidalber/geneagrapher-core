@@ -22,7 +22,7 @@ class CacheResult(Enum):
 
 
 class Cache(Protocol):
-    """This defines an interface that cache objects passed in must implement."""
+    """This defines an interface that passed-in cache objects must implement."""
 
     async def get(self, id: RecordId) -> Tuple[CacheResult, Optional[Record]]:
         ...
@@ -51,6 +51,12 @@ up and try again."
 async def get_record(
     record_id: RecordId, cache: Optional[Cache] = None
 ) -> Optional[Record]:
+    """Get a single record. This is meant to be called for one-off
+    requests. If the calling code is planning to get several records
+    during its lifetime, it should instantiate a `ClientSession`
+    object and call `get_record_inner` below. See `build_graph` in
+    traverse.py for an example of this.
+    """
     async with ClientSession("https://www.mathgenealogy.org") as client:
         return await get_record_inner(record_id, client, cache)
 
@@ -58,6 +64,7 @@ async def get_record(
 async def get_record_inner(
     record_id: RecordId, client: ClientSession, cache: Optional[Cache] = None
 ) -> Optional[Record]:
+    """Get a single record using the provided `ClientSession` object."""
     if cache:
         (status, record) = await cache.get(record_id)
         if status is CacheResult.HIT:

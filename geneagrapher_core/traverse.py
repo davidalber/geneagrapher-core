@@ -17,6 +17,10 @@ class Geneagraph(TypedDict):
 
 
 class LifecycleTracking:
+    """This class is used to track the state of records during the
+    graph-building process.
+    """
+
     def __init__(
         self,
         start_nodes: List[RecordId],
@@ -36,25 +40,34 @@ class LifecycleTracking:
         return len(self.todo)
 
     async def create(self, id: RecordId):
-        """Add the id to the todo set if it is not in todo, doing, or
-        done already.
+        """Add the id to the `todo` set if it is not in todo, doing,
+        or done already.
         """
         if not (id in self.todo or id in self._doing or id in self._done):
             self.todo.add(id)
             await self.report_back()
 
     async def start_next(self) -> RecordId:
+        """Get a record ID from the `todo` set, add it to the `_doing`
+        set, and call the `report_back` callback function.
+        """
         record_id = self.todo.pop()
         self._doing.add(record_id)
         await self.report_back()
         return record_id
 
     async def done(self, id: RecordId):
+        """Move a record ID from the `_doing` set to the `_done` set
+        and call the `report_back` callback function.
+        """
         self._doing.remove(id)
         self._done.add(id)
         await self.report_back()
 
     async def report_back(self):
+        """Call the reporting callback function that was optionally
+        provided during initialization.
+        """
         self._report_back and await self._report_back(
             len(self.todo), len(self._doing), len(self._done)
         )
@@ -65,6 +78,10 @@ async def build_graph(
     cache: Optional[Cache] = None,
     report_progress: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
 ) -> Geneagraph:
+    """Build a complete geneagraph using the `start_nodes` as the
+    graph's leaf nodes. This function traverses in the direction of
+    ancestors.
+    """
     tracking = LifecycleTracking(start_nodes, report_progress)
 
     ggraph: Geneagraph = {
