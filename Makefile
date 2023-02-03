@@ -24,6 +24,6 @@ types: mypy
 
 # Tests
 test:
-	poetry run pytest tests
+	poetry run pytest -m "not live" tests
 
 all:
