@@ -4,12 +4,12 @@ check: format-check flake8 mypy test
 
 # Code formatting
 format:
-	poetry run black geneagrapher_core tests
+	poetry run black geneagrapher_core tests examples
 fmt: format
 black: format
 
 format-check:
-	poetry run black --check geneagrapher_core tests
+	poetry run black --check geneagrapher_core tests examples
 
 # Linting
 flake8:
