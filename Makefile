@@ -27,3 +27,6 @@ test:
 	poetry run pytest -m "not live" tests
 
 all:
+
+clean:
+	rm -rf dist
