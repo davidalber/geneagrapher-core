@@ -1,12 +1,6 @@
 from bs4 import BeautifulSoup
 import os
-
-try:
-    import tomllib
-except ModuleNotFoundError:
-    # tomllib is only in Python >= 3.11
-    # fall back to tomli
-    import tomli as tomllib  # type: ignore
+import tomllib
 
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 RECORD_TESTDATA_DIR = os.path.join(CURR_DIR, "testdata_records")

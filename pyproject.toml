@@ -9,10 +9,9 @@ repository = "https://github.com/davidalber/geneagrapher-core"
 packages = [{include = "geneagrapher_core"}]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.11"
 beautifulsoup4 = "^4.11.1"
 types-beautifulsoup4 = "^4.11.6.4"
-tomli = { version = "^2.0.1", python = "<3.11" }
 aiohttp = "^3.8.3"
 aiodns = "^3.0.0"
 
