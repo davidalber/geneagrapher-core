@@ -72,7 +72,7 @@ class LifecycleTracking:
         provided during initialization.
         """
         self._report_back and await self._report_back(
-            len(self.todo), len(self._doing), len(self._done)
+            self.num_todo, len(self._doing), len(self._done)
         )
 
 
