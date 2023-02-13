@@ -36,7 +36,7 @@ class LifecycleTracking:
 
     @property
     def all_done(self):
-        return len(self.todo) == len(self._doing) == 0
+        return self.num_todo == len(self._doing) == 0
 
     @property
     def num_todo(self):
