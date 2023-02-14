@@ -8,13 +8,24 @@ from geneagrapher_core.record import (
 
 from aiohttp import ClientSession
 import asyncio
+from enum import Flag, auto
 import functools
-from typing import Awaitable, Callable, List, Optional
+from typing import Awaitable, Callable, List, Literal, NamedTuple, Optional
 
 
 class Geneagraph(TypedDict):
     start_nodes: List[RecordId]
     nodes: dict[RecordId, Record]
+
+
+class TraverseDirection(Flag):
+    ADVISORS = auto()
+    DESCENDANTS = auto()
+
+
+class TraverseItem(NamedTuple):
+    id: RecordId
+    traverse_direction: TraverseDirection
 
 
 class LifecycleTracking:
@@ -24,13 +35,13 @@ class LifecycleTracking:
 
     def __init__(
         self,
-        start_nodes: List[RecordId],
+        start_items: List[TraverseItem],
         report_back: Optional[
             Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
         ] = None,
     ):
-        self.todo: set[RecordId] = set(start_nodes)
-        self._doing: set[RecordId] = set()
+        self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
+        self._doing: dict[RecordId, TraverseItem] = {}
         self._done: set[RecordId] = set()
         self._report_back = report_back
 
@@ -42,28 +53,28 @@ class LifecycleTracking:
     def num_todo(self):
         return len(self.todo)
 
-    async def create(self, id: RecordId):
-        """Add the id to the `todo` set if it is not in todo, doing,
+    async def create(self, id: RecordId, direction: TraverseDirection):
+        """Add the node to the `todo` set if it is not in todo, doing,
         or done already.
         """
         if not (id in self.todo or id in self._doing or id in self._done):
-            self.todo.add(id)
+            self.todo[id] = TraverseItem(id, direction)
             await self.report_back()
 
-    async def start_next(self) -> RecordId:
+    async def start_next(self) -> TraverseItem:
         """Get a record ID from the `todo` set, add it to the `_doing`
         set, and call the `report_back` callback function.
         """
-        record_id = self.todo.pop()
-        self._doing.add(record_id)
+        (id, item) = self.todo.popitem()
+        self._doing[id] = item
         await self.report_back()
-        return record_id
+        return item
 
     async def done(self, id: RecordId):
         """Move a record ID from the `_doing` set to the `_done` set
         and call the `report_back` callback function.
         """
-        self._doing.remove(id)
+        self._doing.pop(id)
         self._done.add(id)
         await self.report_back()
 
@@ -77,7 +88,7 @@ class LifecycleTracking:
 
 
 async def build_graph(
-    start_nodes: List[RecordId],
+    start_nodes: List[TraverseItem],
     cache: Optional[Cache] = None,
     report_progress: Optional[
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
@@ -88,24 +99,34 @@ async def build_graph(
     ancestors.
     """
     ggraph: Geneagraph = {
-        "start_nodes": start_nodes,
+        "start_nodes": [n.id for n in start_nodes],
         "nodes": {},
     }
 
     continue_event = asyncio.Event()
 
-    async def fetch_and_process(record_id, client, cache):
-        record = await get_record_inner(record_id, client, cache)
+    async def add_neighbor_work(record: Record, traverse_direction: TraverseDirection):
+        key: Literal["advisors", "descendants"] = (
+            "advisors"
+            if traverse_direction is TraverseDirection.ADVISORS
+            else "descendants"
+        )
+        for id in record[key]:
+            await tracking.create(RecordId(id), traverse_direction)
+            if tracking.num_todo > 0:
+                # New work was added to the todo queue. Signal the
+                # loop below.
+                continue_event.set()
 
-        await tracking.done(record_id)
+    async def fetch_and_process(item, client, cache):
+        record = await get_record_inner(item.id, client, cache)
+
+        await tracking.done(item.id)
         if record is not None:
-            ggraph["nodes"][record_id] = record
-            for id in record["advisors"]:
-                await tracking.create(RecordId(id))
-                if tracking.num_todo > 0:
-                    # New work was added to the todo queue. Signal the
-                    # loop below.
-                    continue_event.set()
+            ggraph["nodes"][item.id] = record
+            for td in (TraverseDirection.ADVISORS, TraverseDirection.DESCENDANTS):
+                if td in item.traverse_direction:
+                    await add_neighbor_work(record, td)
 
         if tracking.all_done:
             # There's no more work to do. Signal the loop below.
@@ -118,11 +139,10 @@ async def build_graph(
         )
         async with ClientSession("https://www.mathgenealogy.org") as client:
             while tracking.num_todo > 0:
-                record_id = await tracking.start_next()
+                item = await tracking.start_next()
 
-                # Create a task to fetch and process the `record_id`
-                # record.
-                tg.create_task(fetch_and_process(record_id, client, cache))
+                # Create a task to fetch and process the record.
+                tg.create_task(fetch_and_process(item, client, cache))
 
                 if tracking.num_todo == 0:
                     # There's nothing left to do for now. Wait for
