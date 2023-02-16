@@ -3,7 +3,7 @@
 check: format-check flake8 mypy test
 
 # Code formatting
-format_targets := geneagrapher_core examples tests
+format_targets := geneagrapher_core docs examples tests
 
 format:
 	poetry run black $(format_targets)
