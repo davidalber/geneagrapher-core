@@ -3,13 +3,15 @@
 check: format-check flake8 mypy test
 
 # Code formatting
+format_targets := geneagrapher_core examples tests
+
 format:
-	poetry run black geneagrapher_core tests examples
+	poetry run black $(format_targets)
 fmt: format
 black: format
 
 format-check:
-	poetry run black --check geneagrapher_core tests examples
+	poetry run black --check $(format_targets)
 
 # Linting
 flake8:
