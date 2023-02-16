@@ -115,7 +115,8 @@ async def build_graph(
         start_nodes = [
             TraverseItem(RecordId(18231), TraverseDirection.ADVISORS),
             TraverseItem(
-                RecordId(18230), TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS
+                RecordId(18230),
+                TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS
             ),
         ]
         graph = await build_graph(start_nodes)
