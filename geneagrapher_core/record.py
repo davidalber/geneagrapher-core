@@ -27,9 +27,18 @@ class Cache(Protocol):
     """This defines an interface that passed-in cache objects must implement."""
 
     async def get(self, id: RecordId) -> Tuple[CacheResult, Optional[Record]]:
+        """Get a record from the cache.
+
+        :param id: Math Genealogy Project ID of the record to retrieve
+        """
         ...
 
     async def set(self, id: RecordId, value: Optional[Record]) -> None:
+        """Store a record in the cache.
+
+        :param id: Math Genealogy Project ID of the record to store
+        :param value: the value to store
+        """
         ...
 
 
@@ -66,9 +75,22 @@ async def get_record(
 ) -> Optional[Record]:
     """Get a single record. This is meant to be called for one-off
     requests. If the calling code is planning to get several records
-    during its lifetime, it should instantiate a `ClientSession`
-    object and call `get_record_inner` below. See `build_graph` in
-    traverse.py for an example of this.
+    during its lifetime, it should instantiate a
+    :class:`aiohttp.ClientSession` object and call
+    ``get_record_inner`` instead. See :py:func:`build_graph
+    <geneagrapher_core.traverse.build_graph>` for an example of this.
+
+    :param record_id: Math Genealogy Project ID of the record to retrieve
+    :param semaphore: a semaphore to cap the HTTP request concurrency
+    :param cache: a cache object for getting and storing results
+
+    **Example**::
+
+        import asyncio
+
+        sem = asyncio.Semaphore()
+        record = await get_record(RecordId(18231), sem)
+
     """
     async with ClientSession("https://www.mathgenealogy.org") as client:
         return await get_record_inner(record_id, client, semaphore, cache)
@@ -80,7 +102,14 @@ async def get_record_inner(
     semaphore: Optional[asyncio.Semaphore] = None,
     cache: Optional[Cache] = None,
 ) -> Optional[Record]:
-    """Get a single record using the provided `ClientSession` object."""
+    """Get a single record using the provided `ClientSession`
+    object. This is useful when making several record requests.
+
+    :param record_id: Math Genealogy Project ID of the record to retrieve
+    :param client: a client session object with which to make HTTP requests
+    :param semaphore: a semaphore to cap the HTTP request concurrency
+    :param cache: a cache object for getting and storing results
+    """
     if cache:
         (status, record) = await cache.get(record_id)
         if status is CacheResult.HIT:

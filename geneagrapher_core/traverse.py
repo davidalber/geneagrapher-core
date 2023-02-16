@@ -19,6 +19,11 @@ class Geneagraph(TypedDict):
 
 
 class TraverseDirection(Flag):
+    """A flag that specifies the traversal direction for a node. This
+    is a :class:`enum.Flag`, so attributes can be combined (e.g.,
+    ``ADVISORS | DESCENDANTS``).
+    """
+
     ADVISORS = auto()
     DESCENDANTS = auto()
 
@@ -95,9 +100,26 @@ async def build_graph(
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
     ] = None,
 ) -> Geneagraph:
-    """Build a complete geneagraph using the `start_nodes` as the
-    graph's leaf nodes. This function traverses in the direction of
-    ancestors.
+    """Build a complete geneagraph using the ``start_nodes`` as the
+    graph's leaf nodes.
+
+    :param start_nodes: a list of nodes and direction from which to traverse from them
+    :param concurrency: the maximum number of concurrent HTTP requests allowed
+    :param cache: a cache object for getting and storing results
+    :param report_progress: callback function called to report graph-building progress
+
+    **Example**::
+
+        # Build a graph that contains Carl Friedrich Gauß (18231), his advisor tree,
+        # Johann Friedrich Pfaff (18230), his advisor tree, and his descendant tree.
+        start_nodes = [
+            TraverseItem(RecordId(18231), TraverseDirection.ADVISORS),
+            TraverseItem(
+                RecordId(18230), TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS
+            ),
+        ]
+        graph = await build_graph(start_nodes)
+
     """
     semaphore = asyncio.Semaphore(concurrency)
     ggraph: Geneagraph = {
