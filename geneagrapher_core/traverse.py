@@ -89,6 +89,7 @@ class LifecycleTracking:
 
 async def build_graph(
     start_nodes: List[TraverseItem],
+    concurrency: int = 4,
     cache: Optional[Cache] = None,
     report_progress: Optional[
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
@@ -98,6 +99,7 @@ async def build_graph(
     graph's leaf nodes. This function traverses in the direction of
     ancestors.
     """
+    semaphore = asyncio.Semaphore(concurrency)
     ggraph: Geneagraph = {
         "start_nodes": [n.id for n in start_nodes],
         "nodes": {},
@@ -119,7 +121,7 @@ async def build_graph(
                 continue_event.set()
 
     async def fetch_and_process(item, client, cache):
-        record = await get_record_inner(item.id, client, cache)
+        record = await get_record_inner(item.id, client, semaphore, cache)
 
         await tracking.done(item.id)
         if record is not None:
