@@ -62,10 +62,13 @@ async def test_get_record_inner(
         (CacheResult.HIT, s.cache_record) if cache_hit else (CacheResult.MISS, None)
     )
 
-    record = await get_record_inner(s.rid, s.client_session, m_cache)
+    m_semaphore = AsyncMock()
+
+    record = await get_record_inner(s.rid, s.client_session, m_semaphore, m_cache)
 
     if cache_hit:
         assert record is s.cache_record
+        m_semaphore.__aenter__.assert_not_called()
         m_fetch_document.assert_not_called()
         m_has_record.assert_not_called()
         m_get_name.assert_not_called()
@@ -76,6 +79,7 @@ async def test_get_record_inner(
         m_cache.set.assert_not_called()
 
     else:
+        m_semaphore.__aenter__.assert_called_once_with()
         m_fetch_document.assert_called_once_with(s.rid, s.client_session)
         m_has_record.assert_called_once_with(m_soup)
 

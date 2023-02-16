@@ -1,5 +1,7 @@
 from aiohttp import ClientSession
+import asyncio
 from bs4 import BeautifulSoup, Tag
+from contextlib import asynccontextmanager
 from enum import Enum, auto
 import re
 from typing import List, NewType, Optional, Protocol, Tuple, TypedDict
@@ -31,6 +33,15 @@ class Cache(Protocol):
         ...
 
 
+@asynccontextmanager
+async def fake_semaphore():
+    """If the caller to the `get_record*` functions below does not
+    pass a semaphore, this async context manager, which does nothing,
+    is used instead.
+    """
+    yield None
+
+
 def has_record(soup: BeautifulSoup) -> bool:
     """Return True if the input tree contains a mathematician record
     and False otherwise.
@@ -49,7 +60,9 @@ up and try again."
 
 
 async def get_record(
-    record_id: RecordId, cache: Optional[Cache] = None
+    record_id: RecordId,
+    semaphore: Optional[asyncio.Semaphore] = None,
+    cache: Optional[Cache] = None,
 ) -> Optional[Record]:
     """Get a single record. This is meant to be called for one-off
     requests. If the calling code is planning to get several records
@@ -58,11 +71,14 @@ async def get_record(
     traverse.py for an example of this.
     """
     async with ClientSession("https://www.mathgenealogy.org") as client:
-        return await get_record_inner(record_id, client, cache)
+        return await get_record_inner(record_id, client, semaphore, cache)
 
 
 async def get_record_inner(
-    record_id: RecordId, client: ClientSession, cache: Optional[Cache] = None
+    record_id: RecordId,
+    client: ClientSession,
+    semaphore: Optional[asyncio.Semaphore] = None,
+    cache: Optional[Cache] = None,
 ) -> Optional[Record]:
     """Get a single record using the provided `ClientSession` object."""
     if cache:
@@ -70,7 +86,8 @@ async def get_record_inner(
         if status is CacheResult.HIT:
             return record
 
-    soup: BeautifulSoup = await fetch_document(record_id, client)
+    async with semaphore or fake_semaphore():
+        soup: BeautifulSoup = await fetch_document(record_id, client)
 
     if not has_record(soup):
         record = None
