@@ -29,7 +29,7 @@ $ poetry run python cache_driver.py > /dev/null
 """
 
 from geneagrapher_core.record import CacheResult, Record, RecordId
-from geneagrapher_core.traverse import build_graph
+from geneagrapher_core.traverse import TraverseDirection, TraverseItem, build_graph
 
 import asyncio
 import json
@@ -88,7 +88,11 @@ async def get_progress(
 if __name__ == "__main__":
     cache = RedisCache()
     ggraph = asyncio.run(
-        build_graph([RecordId(18231)], cache=cache, report_progress=get_progress)
+        build_graph(
+            [TraverseItem(RecordId(18231), TraverseDirection.ADVISORS)],
+            cache=cache,
+            report_progress=get_progress,
+        )
     )
 
     print(file=sys.stderr)  # this adds a newline to the progress bar
