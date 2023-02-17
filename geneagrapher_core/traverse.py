@@ -94,6 +94,7 @@ class LifecycleTracking:
 
 async def build_graph(
     start_nodes: List[TraverseItem],
+    *,
     max_concurrency: int = 4,
     cache: Optional[Cache] = None,
     report_progress: Optional[

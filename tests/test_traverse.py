@@ -232,7 +232,12 @@ async def test_build_graph(
     }
 
     assert (
-        await build_graph(start_nodes, s.concurrency, s.cache, m_report_progress)
+        await build_graph(
+            start_nodes,
+            max_concurrency=s.concurrency,
+            cache=s.cache,
+            report_progress=m_report_progress,
+        )
         == expected
     )
     m_client_session.assert_called_once_with("https://www.mathgenealogy.org")
