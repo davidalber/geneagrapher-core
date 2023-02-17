@@ -5,7 +5,8 @@ on:
     - cron: "9 9 * * *"
 
 jobs:
-  build:
+  live_tests:
+    name: Live Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
