@@ -17,9 +17,6 @@ Documentation about how to call into this package's functions can be
 found at http://geneagrapher-core.readthedocs.io/.
 
 # Development
-This section describes what is needed to do development on the code in
-this package.
-
 Dependencies in this package are managed by
 [Poetry](https://python-poetry.org/). Thus, your Python environment
 will need Poetry installed. Install all dependencies with:
