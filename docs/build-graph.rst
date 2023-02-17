@@ -1,6 +1,6 @@
-******************************
+##############################
 Getting All Records in a Graph
-******************************
+##############################
 .. currentmodule:: geneagrapher_core.traverse
 
 Get all records in a graph using the :func:`build_graph <build_graph>`
@@ -9,7 +9,7 @@ function.
 .. autofunction:: build_graph
 
 Related types
--------------
+=============
 .. autoclass:: TraverseItem
    :members:
    :undoc-members:
@@ -26,7 +26,7 @@ Related types
    :member-order: bysource
 
 Report callback
----------------
+===============
 
 The :func:`build_graph <build_graph>` function optionally takes a
 callback function. If provided, this function will be called when new
@@ -45,7 +45,7 @@ The `report_progress` callback function is called with:
   3. The number of records that have been retrieved.
 
 Examples
-^^^^^^^^
+--------
 Here's an example of a simple, blocking callback::
 
     async def show_progress(
@@ -70,7 +70,7 @@ from blocking progress on data retrieval.
         tg.create_task(do_expensive_network_request(to_fetch, fetching, fetched))
 
 Example Code
-------------
+============
 An example of how to use the ``cache`` and ``report_progress``
 arguments to :func:`build_graph
 <geneagrapher_core.traverse.build_graph>` is in the repository's

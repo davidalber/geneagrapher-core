@@ -1,6 +1,6 @@
-*******************
+###################
 Get a Single Record
-*******************
+###################
 
 .. currentmodule:: geneagrapher_core.record
 
@@ -14,7 +14,7 @@ an :class:`aiohttp.ClientSession` and optionally pass a
 .. autofunction:: get_record_inner
 
 Related types
--------------
+=============
 .. autoclass:: Record
    :members:
    :undoc-members:
