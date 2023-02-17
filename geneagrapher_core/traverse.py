@@ -94,7 +94,7 @@ class LifecycleTracking:
 
 async def build_graph(
     start_nodes: List[TraverseItem],
-    concurrency: int = 4,
+    max_concurrency: int = 4,
     cache: Optional[Cache] = None,
     report_progress: Optional[
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
@@ -104,7 +104,7 @@ async def build_graph(
     graph's leaf nodes.
 
     :param start_nodes: a list of nodes and direction from which to traverse from them
-    :param concurrency: the maximum number of concurrent HTTP requests allowed
+    :param max_concurrency: the maximum number of concurrent HTTP requests allowed
     :param cache: a cache object for getting and storing results
     :param report_progress: callback function called to report graph-building progress
 
@@ -122,7 +122,7 @@ async def build_graph(
         graph = await build_graph(start_nodes)
 
     """
-    semaphore = asyncio.Semaphore(concurrency)
+    semaphore = asyncio.Semaphore(max_concurrency)
     ggraph: Geneagraph = {
         "start_nodes": [n.id for n in start_nodes],
         "nodes": {},
