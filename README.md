@@ -1,6 +1,6 @@
 # geneagrapher-core [![Unit Tests Status](https://github.com/davidalber/geneagrapher-core/actions/workflows/unit-tests.yaml/badge.svg?branch=main)](https://github.com/davidalber/geneagrapher-core/actions/workflows/unit-tests.yaml/badge.svg?branch=main) [![Live Tests Status](https://github.com/davidalber/geneagrapher-core/actions/workflows/live-tests.yaml/badge.svg?branch=main)](https://github.com/davidalber/geneagrapher-core/actions/workflows/live-tests.yaml/badge.svg?branch=main) [![Documentation Status](https://readthedocs.org/projects/geneagrapher-core/badge/?version=latest)](https://geneagrapher-core.readthedocs.io/en/latest/?badge=latest)
 
-# Overview
+## Overview
 Geneagrapher is a tool for extracting information from the
 [Mathematics Genealogy Project](https://www.mathgenealogy.org/) to
 form a math family tree, where connections are between advisors and
@@ -14,11 +14,11 @@ tools. If you just want to build a geneagraph, take a look at
 want to get mathematician records and use them in code, then this
 project may be useful to you.
 
-# Documentation
+## Documentation
 Documentation about how to call into this package's functions can be
 found at http://geneagrapher-core.readthedocs.io/.
 
-# Development
+## Development
 Dependencies in this package are managed by
 [Poetry](https://python-poetry.org/). Thus, your Python environment
 will need Poetry installed. Install all dependencies with:
