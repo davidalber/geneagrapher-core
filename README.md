@@ -1,3 +1,5 @@
+# geneagrapher-core [![Unit Tests Status](https://github.com/davidalber/geneagrapher-core/actions/workflows/unit-tests.yaml/badge.svg?branch=main)](https://github.com/davidalber/geneagrapher-core/actions/workflows/unit-tests.yaml/badge.svg?branch=main) [![Live Tests Status](https://github.com/davidalber/geneagrapher-core/actions/workflows/live-tests.yaml/badge.svg?branch=main)](https://github.com/davidalber/geneagrapher-core/actions/workflows/live-tests.yaml/badge.svg?branch=main) [![Documentation Status](https://readthedocs.org/projects/geneagrapher-core/badge/?version=latest)](https://geneagrapher-core.readthedocs.io/en/latest/?badge=latest)
+
 # Overview
 Geneagrapher is a tool for extracting information from the
 [Mathematics Genealogy Project](https://www.mathgenealogy.org/) to
