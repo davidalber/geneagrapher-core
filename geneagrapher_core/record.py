@@ -76,8 +76,7 @@ async def get_record(
     requests. If the calling code is planning to get several records
     during its lifetime, it should instantiate a
     :class:`aiohttp.ClientSession` object and call
-    ``get_record_inner`` instead. See :py:func:`build_graph
-    <geneagrapher_core.traverse.build_graph>` for an example of this.
+    :func:`get_record_inner <get_record_inner>` instead.
 
     :param record_id: Math Genealogy Project ID of the record to retrieve
     :param cache: a cache object for getting and storing results
@@ -97,13 +96,15 @@ async def get_record_inner(
     semaphore: Optional[asyncio.Semaphore] = None,
     cache: Optional[Cache] = None,
 ) -> Optional[Record]:
-    """Get a single record using the provided `ClientSession`
-    object. This is useful when making several record requests.
+    """Get a single record using the provided
+    :class:`aiohttp.ClientSession` and :class:`asyncio.Semaphore`
+    objects. This is useful when making several record requests.
 
     :param record_id: Math Genealogy Project ID of the record to retrieve
     :param client: a client session object with which to make HTTP requests
     :param semaphore: a semaphore to cap the HTTP request concurrency
     :param cache: a cache object for getting and storing results
+
     """
     if cache:
         (status, record) = await cache.get(record_id)
