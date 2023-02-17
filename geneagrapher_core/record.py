@@ -70,7 +70,6 @@ up and try again."
 
 async def get_record(
     record_id: RecordId,
-    semaphore: Optional[asyncio.Semaphore] = None,
     cache: Optional[Cache] = None,
 ) -> Optional[Record]:
     """Get a single record. This is meant to be called for one-off
@@ -81,19 +80,15 @@ async def get_record(
     <geneagrapher_core.traverse.build_graph>` for an example of this.
 
     :param record_id: Math Genealogy Project ID of the record to retrieve
-    :param semaphore: a semaphore to cap the HTTP request concurrency
     :param cache: a cache object for getting and storing results
 
     **Example**::
 
-        import asyncio
-
-        sem = asyncio.Semaphore()
-        record = await get_record(RecordId(18231), sem)
+        record = await get_record(RecordId(18231))
 
     """
     async with ClientSession("https://www.mathgenealogy.org") as client:
-        return await get_record_inner(record_id, client, semaphore, cache)
+        return await get_record_inner(record_id, client, cache=cache)
 
 
 async def get_record_inner(
