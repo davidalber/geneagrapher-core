@@ -7,7 +7,8 @@ from geneagrapher_core.traverse import (
 from geneagrapher_core.record import RecordId
 
 import pytest
-from unittest.mock import AsyncMock, call, patch, sentinel as s
+from typing import List, Optional
+from unittest.mock import AsyncMock, MagicMock, call, patch, sentinel as s
 
 
 class TestLifecycleTracking:
@@ -22,13 +23,22 @@ class TestLifecycleTracking:
     @pytest.mark.parametrize(
         "todo,doing,expected",
         [
-            ([], [], True),
-            ([TraverseItem(s.rid1, s.tda)], [], False),
-            ([], [TraverseItem(s.rid1, s.tda)], False),
-            ([TraverseItem(s.rid1, s.tda)], [TraverseItem(s.rid2, s.tda)], False),
+            ([], {}, True),
+            ([TraverseItem(s.rid1, s.tda)], {}, False),
+            ([], {s.rid1: TraverseItem(s.rid1, s.tda)}, False),
+            (
+                [TraverseItem(s.rid1, s.tda)],
+                {s.rid2: TraverseItem(s.rid2, s.tda)},
+                False,
+            ),
         ],
     )
-    def test_all_done(self, todo, doing, expected) -> None:
+    def test_all_done(
+        self,
+        todo: List[TraverseItem],
+        doing: dict[RecordId, TraverseItem],
+        expected: bool,
+    ) -> None:
         t = LifecycleTracking(todo)
         t._doing = doing
         assert t.all_done is expected
@@ -41,7 +51,7 @@ class TestLifecycleTracking:
             ([TraverseItem(s.rid1, s.tda), TraverseItem(s.rid2, s.tda)], 2),
         ],
     )
-    def test_num_todo(self, todo, expected):
+    def test_num_todo(self, todo: List[TraverseItem], expected: int) -> None:
         t = LifecycleTracking(todo)
         assert t.num_todo == expected
 
@@ -91,7 +101,12 @@ class TestLifecycleTracking:
     )
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
     async def test_create(
-        self, m_report_back, start_nodes, new_node, new_direction, final_todo
+        self,
+        m_report_back: MagicMock,
+        start_nodes: List[TraverseItem],
+        new_node: RecordId,
+        new_direction: TraverseDirection,
+        final_todo: dict[RecordId, TraverseItem],
     ) -> None:
         t = LifecycleTracking(start_nodes)
         await t.create(new_node, new_direction)
@@ -109,7 +124,7 @@ class TestLifecycleTracking:
 
     @pytest.mark.asyncio
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    async def test_done(self, m_report_back) -> None:
+    async def test_done(self, m_report_back: MagicMock) -> None:
         t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
         t._doing[s.rid2] = TraverseItem(s.rid2, s.tda)
 
@@ -120,10 +135,10 @@ class TestLifecycleTracking:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("report_back", [None, AsyncMock()])
-    async def test_report_back(self, report_back) -> None:
+    async def test_report_back(self, report_back: Optional[AsyncMock]) -> None:
         t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], report_back)
 
-        assert await t.report_back() is None
+        await t.report_back()
         if report_back is not None:
             report_back.assert_called_once_with(1, 0, 0)
 
@@ -174,13 +189,13 @@ class TestLifecycleTracking:
 @patch("geneagrapher_core.traverse.get_record_inner")
 @patch("geneagrapher_core.traverse.ClientSession")
 async def test_build_graph(
-    m_client_session,
-    m_get_record_inner,
-    m_semaphore,
-    start_nodes,
-    expected_info,
-    expected_call_ids,
-    expected_num_report_callbacks,
+    m_client_session: MagicMock,
+    m_get_record_inner: MagicMock,
+    m_semaphore: MagicMock,
+    start_nodes: List[TraverseItem],
+    expected_info: dict[str, List[int]],
+    expected_call_ids: List[int],
+    expected_num_report_callbacks: int,
 ) -> None:
     m_session = AsyncMock()
     m_client_session.return_value.__aenter__.return_value = m_session

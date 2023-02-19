@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup, Tag
 from contextlib import asynccontextmanager
 from enum import Enum, auto
 import re
-from typing import List, NewType, Optional, Protocol, Tuple, TypedDict
+from typing import AsyncIterator, List, NewType, Optional, Protocol, Tuple, TypedDict
 
 RecordId = NewType("RecordId", int)
 
@@ -43,7 +43,7 @@ class Cache(Protocol):
 
 
 @asynccontextmanager
-async def fake_semaphore():
+async def fake_semaphore() -> AsyncIterator[None]:
     """If the caller to the `get_record*` functions below does not
     pass a semaphore, this async context manager, which does nothing,
     is used instead.
@@ -150,7 +150,7 @@ def get_institution(soup: BeautifulSoup) -> Optional[str]:
         "div", style="line-height: 30px; text-align: center; margin-bottom: 1ex"
     ):
         try:
-            institution = inst.find("span").find("span").text
+            institution: str = inst.find("span").find("span").text
             if institution != "":
                 return institution
         except AttributeError:

@@ -2,7 +2,6 @@ from geneagrapher_core.record import (
     Cache,
     Record,
     RecordId,
-    TypedDict,
     get_record_inner,
 )
 
@@ -10,7 +9,7 @@ from aiohttp import ClientSession
 import asyncio
 from enum import Flag, auto
 import functools
-from typing import Awaitable, Callable, List, Literal, NamedTuple, Optional
+from typing import Awaitable, Callable, List, Literal, NamedTuple, Optional, TypedDict
 
 
 class Geneagraph(TypedDict):
@@ -41,9 +40,7 @@ class LifecycleTracking:
     def __init__(
         self,
         start_items: List[TraverseItem],
-        report_callback: Optional[
-            Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
-        ] = None,
+        report_callback: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
     ):
         self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
         self._doing: dict[RecordId, TraverseItem] = {}
@@ -51,14 +48,14 @@ class LifecycleTracking:
         self._report_callback = report_callback
 
     @property
-    def all_done(self):
-        return self.num_todo == len(self._doing) == 0
+    def all_done(self) -> bool:
+        return bool(self.num_todo == len(self._doing) == 0)
 
     @property
-    def num_todo(self):
+    def num_todo(self) -> int:
         return len(self.todo)
 
-    async def create(self, id: RecordId, direction: TraverseDirection):
+    async def create(self, id: RecordId, direction: TraverseDirection) -> None:
         """Add the node to the `todo` set if it is not in todo, doing,
         or done already.
         """
@@ -75,7 +72,7 @@ class LifecycleTracking:
         await self.report_back()
         return item
 
-    async def done(self, id: RecordId):
+    async def done(self, id: RecordId) -> None:
         """Move a record ID from the `_doing` set to the `_done` set
         and call the `report_back` callback function.
         """
@@ -83,13 +80,14 @@ class LifecycleTracking:
         self._done.add(id)
         await self.report_back()
 
-    async def report_back(self):
+    async def report_back(self) -> None:
         """Call the reporting callback function that was optionally
         provided during initialization.
         """
-        self._report_callback and await self._report_callback(
-            self.num_todo, len(self._doing), len(self._done)
-        )
+        if self._report_callback is not None:
+            await self._report_callback(
+                self.num_todo, len(self._doing), len(self._done)
+            )
 
 
 async def build_graph(
@@ -131,7 +129,9 @@ async def build_graph(
 
     continue_event = asyncio.Event()
 
-    async def add_neighbor_work(record: Record, traverse_direction: TraverseDirection):
+    async def add_neighbor_work(
+        record: Record, traverse_direction: TraverseDirection
+    ) -> None:
         key: Literal["advisors", "descendants"] = (
             "advisors"
             if traverse_direction is TraverseDirection.ADVISORS
@@ -144,7 +144,9 @@ async def build_graph(
                 # loop below.
                 continue_event.set()
 
-    async def fetch_and_process(item, client, cache):
+    async def fetch_and_process(
+        item: TraverseItem, client: ClientSession, cache: Optional[Cache]
+    ) -> None:
         record = await get_record_inner(item.id, client, semaphore, cache)
 
         await tracking.done(item.id)

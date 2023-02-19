@@ -15,10 +15,10 @@ from .conftest import RECORD_TESTDATA_DIR, load_record_test
 from glob import glob
 import os
 import pytest
-from unittest.mock import AsyncMock, patch, sentinel as s
+from unittest.mock import AsyncMock, MagicMock, patch, sentinel as s
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if "test_record_ids" in metafunc.fixturenames:
         # Generate a list of the IDs of test records in the test data
         # directory.
@@ -28,7 +28,7 @@ def pytest_generate_tests(metafunc):
         )
 
 
-def test_has_record(test_record_ids) -> None:
+def test_has_record(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert has_record(soup) is expected["is_valid"]
 
@@ -44,15 +44,15 @@ def test_has_record(test_record_ids) -> None:
 @patch("geneagrapher_core.record.has_record")
 @patch("geneagrapher_core.record.fetch_document")
 async def test_get_record_inner(
-    m_fetch_document,
-    m_has_record,
-    m_get_name,
-    m_get_institution,
-    m_get_year,
-    m_get_descendants,
-    m_get_advisors,
-    has_record,
-    cache_hit,
+    m_fetch_document: MagicMock,
+    m_has_record: MagicMock,
+    m_get_name: MagicMock,
+    m_get_institution: MagicMock,
+    m_get_year: MagicMock,
+    m_get_descendants: MagicMock,
+    m_get_advisors: MagicMock,
+    has_record: bool,
+    cache_hit: bool,
 ) -> None:
     m_has_record.return_value = has_record
     m_soup = m_fetch_document.return_value
@@ -113,7 +113,7 @@ async def test_get_record_inner(
 @pytest.mark.asyncio
 @patch("geneagrapher_core.record.BeautifulSoup")
 @patch("geneagrapher_core.record.ClientSession")
-async def test_fetch_document(m_client_session, m_bs) -> None:
+async def test_fetch_document(m_client_session: MagicMock, m_bs: MagicMock) -> None:
     m_page = AsyncMock()
     m_client_session.get.return_value.__aenter__.return_value = m_page
 
@@ -122,26 +122,26 @@ async def test_fetch_document(m_client_session, m_bs) -> None:
     m_bs.assert_called_once_with(m_page.text.return_value, "html.parser")
 
 
-def test_get_name(test_record_ids) -> None:
+def test_get_name(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_name(soup) == expected["name"]
 
 
-def test_get_institution(test_record_ids) -> None:
+def test_get_institution(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_institution(soup) == expected.get("institution")
 
 
-def test_get_year(test_record_ids) -> None:
+def test_get_year(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_year(soup) == expected.get("year")
 
 
-def test_get_descendants(test_record_ids) -> None:
+def test_get_descendants(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_descendants(soup) == expected["descendants"]
 
 
-def test_get_advisors(test_record_ids) -> None:
+def test_get_advisors(test_record_ids: str) -> None:
     soup, expected = load_record_test(test_record_ids)
     assert get_advisors(soup) == expected["advisors"]
