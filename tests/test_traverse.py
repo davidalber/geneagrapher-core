@@ -282,4 +282,5 @@ async def test_build_graph(
     for record_id in expected_info["node_list"]:
         assert (
             call(ANY, testdata[record_id]) in m_record_callback.mock_calls
-        )  # ANY is a placeholder for the TaskGroup object passed to the callback function
+        )  # ANY is a placeholder for the TaskGroup object passed to the callback
+        # function
