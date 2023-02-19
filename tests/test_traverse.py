@@ -134,13 +134,13 @@ class TestLifecycleTracking:
         m_report_back.assert_called_once_with()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("report_back", [None, AsyncMock()])
-    async def test_report_back(self, report_back: Optional[AsyncMock]) -> None:
-        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], report_back)
+    @pytest.mark.parametrize("report_callback", [None, AsyncMock()])
+    async def test_report_back(self, report_callback: Optional[AsyncMock]) -> None:
+        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], report_callback)
 
         await t.report_back()
-        if report_back is not None:
-            report_back.assert_called_once_with(1, 0, 0)
+        if report_callback is not None:
+            report_callback.assert_called_once_with(1, 0, 0)
 
 
 @pytest.mark.asyncio
