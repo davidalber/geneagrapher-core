@@ -91,7 +91,7 @@ if __name__ == "__main__":
         build_graph(
             [TraverseItem(RecordId(18231), TraverseDirection.ADVISORS)],
             cache=cache,
-            report_progress=get_progress,
+            report_callback=get_progress,
         )
     )
 

@@ -97,7 +97,7 @@ async def build_graph(
     *,
     max_concurrency: int = 4,
     cache: Optional[Cache] = None,
-    report_progress: Optional[
+    report_callback: Optional[
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
     ] = None,
 ) -> Geneagraph:
@@ -107,7 +107,7 @@ async def build_graph(
     :param start_nodes: a list of nodes and direction from which to traverse from them
     :param max_concurrency: the maximum number of concurrent HTTP requests allowed
     :param cache: a cache object for getting and storing results
-    :param report_progress: callback function called to report graph-building progress
+    :param report_callback: callback function called to report graph-building progress
 
     **Example**::
 
@@ -161,7 +161,7 @@ async def build_graph(
     async with asyncio.TaskGroup() as tg:
         tracking = LifecycleTracking(
             start_nodes,
-            None if report_progress is None else functools.partial(report_progress, tg),
+            None if report_callback is None else functools.partial(report_callback, tg),
         )
         async with ClientSession("https://www.mathgenealogy.org") as client:
             while tracking.num_todo > 0:

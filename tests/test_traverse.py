@@ -185,7 +185,7 @@ async def test_build_graph(
     m_session = AsyncMock()
     m_client_session.return_value.__aenter__.return_value = m_session
 
-    m_report_progress = AsyncMock()
+    m_report_callback = AsyncMock()
 
     testdata = {
         1: {
@@ -240,7 +240,7 @@ async def test_build_graph(
             start_nodes,
             max_concurrency=s.concurrency,
             cache=s.cache,
-            report_progress=m_report_progress,
+            report_callback=m_report_callback,
         )
         == expected
     )
@@ -255,7 +255,7 @@ async def test_build_graph(
         assert c in m_get_record_inner.call_args_list
 
     # Check the reporting callback calls.
-    assert len(m_report_progress.mock_calls) == expected_num_report_callbacks
-    assert m_report_progress.call_args.args[1] == 0
-    assert m_report_progress.call_args.args[2] == 0
-    assert m_report_progress.call_args.args[3] == len(expected_call_ids)
+    assert len(m_report_callback.mock_calls) == expected_num_report_callbacks
+    assert m_report_callback.call_args.args[1] == 0
+    assert m_report_callback.call_args.args[2] == 0
+    assert m_report_callback.call_args.args[3] == len(expected_call_ids)

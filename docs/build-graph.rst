@@ -33,7 +33,7 @@ callback function. If provided, this function will be called when new
 records are added to the traversal plan or when records have been
 retrieved.
 
-The `report_progress` callback function is called with:
+The ``report_callback`` function is called with:
 
 - An :class:`asyncio.TaskGroup`, which is useful if you want to do
   something expensive in the reporting callback and do not want to
@@ -71,7 +71,7 @@ from blocking progress on data retrieval.
 
 Example Code
 ============
-An example of how to use the ``cache`` and ``report_progress``
+An example of how to use the ``cache`` and ``report_callback``
 arguments to :func:`build_graph
 <geneagrapher_core.traverse.build_graph>` is in the repository's
 `examples directory
