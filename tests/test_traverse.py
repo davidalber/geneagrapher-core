@@ -273,9 +273,9 @@ async def test_build_graph(
 
     # Check the reporting callback calls.
     assert len(m_report_callback.mock_calls) == expected_num_report_callbacks
-    assert m_report_callback.call_args.args[1] == 0
-    assert m_report_callback.call_args.args[2] == 0
-    assert m_report_callback.call_args.args[3] == len(expected_call_ids)
+    assert m_report_callback.call_args == call(
+        ANY, 0, 0, len(expected_call_ids)
+    )  # ANY is a placeholder for the TaskGroup object passed to the callback function
 
     # Check the record callback calls.
     assert len(m_record_callback.mock_calls) == len(expected_info["node_list"])
