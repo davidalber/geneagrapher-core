@@ -145,16 +145,15 @@ class TestLifecycleTracking:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "start_nodes,expected_info,expected_call_ids,expected_num_report_callbacks",
+    "start_nodes,expected_graph_records,expected_call_ids,\
+expected_num_report_callbacks",
     [
         (
             [
                 TraverseItem(RecordId(1), TraverseDirection.ADVISORS),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
-            {
-                "node_list": [1, 2, 3, 4],
-            },
+            [1, 2, 3, 4],
             [1, 2, 3, 4, 5],
             13,
         ),
@@ -163,9 +162,7 @@ class TestLifecycleTracking:
                 TraverseItem(RecordId(1), TraverseDirection.DESCENDANTS),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
-            {
-                "node_list": [1, 2, 3, 6, 7, 8],
-            },
+            [1, 2, 3, 6, 7, 8],
             [1, 2, 3, 5, 6, 7, 8, 9],
             22,
         ),
@@ -177,9 +174,7 @@ class TestLifecycleTracking:
                 ),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
-            {
-                "node_list": [1, 2, 3, 4, 6, 7, 8],
-            },
+            [1, 2, 3, 4, 6, 7, 8],
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             25,
         ),
@@ -193,7 +188,7 @@ async def test_build_graph(
     m_get_record_inner: MagicMock,
     m_semaphore: MagicMock,
     start_nodes: List[TraverseItem],
-    expected_info: dict[str, List[int]],
+    expected_graph_records: List[int],
     expected_call_ids: List[int],
     expected_num_report_callbacks: int,
 ) -> None:
@@ -248,7 +243,7 @@ async def test_build_graph(
 
     expected = {
         "start_nodes": [r.id for r in start_nodes],
-        "nodes": {rid: testdata[rid] for rid in expected_info["node_list"]},
+        "nodes": {rid: testdata[rid] for rid in expected_graph_records},
     }
 
     assert (
@@ -278,8 +273,8 @@ async def test_build_graph(
     )  # ANY is a placeholder for the TaskGroup object passed to the callback function
 
     # Check the record callback calls.
-    assert len(m_record_callback.mock_calls) == len(expected_info["node_list"])
-    for record_id in expected_info["node_list"]:
+    assert len(m_record_callback.mock_calls) == len(expected_graph_records)
+    for record_id in expected_graph_records:
         assert (
             call(ANY, testdata[record_id]) in m_record_callback.mock_calls
         )  # ANY is a placeholder for the TaskGroup object passed to the callback
