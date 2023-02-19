@@ -41,14 +41,14 @@ class LifecycleTracking:
     def __init__(
         self,
         start_items: List[TraverseItem],
-        report_back: Optional[
+        report_callback: Optional[
             Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
         ] = None,
     ):
         self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
         self._doing: dict[RecordId, TraverseItem] = {}
         self._done: set[RecordId] = set()
-        self._report_back = report_back
+        self._report_callback = report_callback
 
     @property
     def all_done(self):
@@ -87,7 +87,7 @@ class LifecycleTracking:
         """Call the reporting callback function that was optionally
         provided during initialization.
         """
-        self._report_back and await self._report_back(
+        self._report_callback and await self._report_callback(
             self.num_todo, len(self._doing), len(self._done)
         )
 

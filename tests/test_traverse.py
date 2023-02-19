@@ -17,7 +17,7 @@ class TestLifecycleTracking:
         assert t.todo == {ti.id: ti for ti in start_nodes}
         assert t._doing == {}
         assert t._done == set()
-        assert t._report_back == s.report_back
+        assert t._report_callback == s.report_back
 
     @pytest.mark.parametrize(
         "todo,doing,expected",
