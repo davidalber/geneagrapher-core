@@ -130,7 +130,7 @@ class TestLifecycleTracking:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "start_nodes,expected_info,expected_call_ids",
+    "start_nodes,expected_info,expected_call_ids,expected_num_report_callbacks",
     [
         (
             [
@@ -141,6 +141,7 @@ class TestLifecycleTracking:
                 "node_list": [1, 2, 3, 4],
             },
             [1, 2, 3, 4, 5],
+            13,
         ),
         (
             [
@@ -151,6 +152,7 @@ class TestLifecycleTracking:
                 "node_list": [1, 2, 3, 6, 7, 8],
             },
             [1, 2, 3, 5, 6, 7, 8, 9],
+            22,
         ),
         (
             [
@@ -164,6 +166,7 @@ class TestLifecycleTracking:
                 "node_list": [1, 2, 3, 4, 6, 7, 8],
             },
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            25,
         ),
     ],
 )
@@ -177,6 +180,7 @@ async def test_build_graph(
     start_nodes,
     expected_info,
     expected_call_ids,
+    expected_num_report_callbacks,
 ) -> None:
     m_session = AsyncMock()
     m_client_session.return_value.__aenter__.return_value = m_session
@@ -249,3 +253,9 @@ async def test_build_graph(
         for rid in expected_call_ids
     ]:
         assert c in m_get_record_inner.call_args_list
+
+    # Check the reporting callback calls.
+    assert len(m_report_progress.mock_calls) == expected_num_report_callbacks
+    assert m_report_progress.call_args.args[1] == 0
+    assert m_report_progress.call_args.args[2] == 0
+    assert m_report_progress.call_args.args[3] == len(expected_call_ids)
