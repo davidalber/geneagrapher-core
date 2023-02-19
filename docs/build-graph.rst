@@ -57,7 +57,7 @@ Here's an example of a simple, blocking callback::
         print(f"Todo: {to_fetch}    Doing: {fetching}    Done: {fetched}")
 
 Here's a more complicated example where you might want to create a new
-task to complete the reporting. Doing so keeps the reporting process
+task to complete the reporting. Doing so keeps the reporting callback
 from blocking progress on data retrieval.
 
 .. code-block::
