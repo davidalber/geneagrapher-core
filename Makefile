@@ -21,7 +21,7 @@ lint: flake8
 
 # Type enforcement
 mypy:
-	poetry run mypy geneagrapher_core tests
+	poetry run mypy --strict geneagrapher_core tests
 types: mypy
 
 # Tests
