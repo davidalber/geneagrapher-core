@@ -1,4 +1,4 @@
-name: Live tests
+name: Live Tests
 
 on:
   schedule:
