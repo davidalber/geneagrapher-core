@@ -8,7 +8,7 @@ from geneagrapher_core.record import RecordId
 
 import pytest
 from typing import List, Optional
-from unittest.mock import AsyncMock, MagicMock, call, patch, sentinel as s
+from unittest.mock import ANY, AsyncMock, MagicMock, call, patch, sentinel as s
 
 
 class TestLifecycleTracking:
@@ -201,6 +201,7 @@ async def test_build_graph(
     m_client_session.return_value.__aenter__.return_value = m_session
 
     m_report_callback = AsyncMock()
+    m_record_callback = AsyncMock()
 
     testdata = {
         1: {
@@ -256,6 +257,7 @@ async def test_build_graph(
             max_concurrency=s.concurrency,
             cache=s.cache,
             report_callback=m_report_callback,
+            record_callback=m_record_callback,
         )
         == expected
     )
@@ -274,3 +276,10 @@ async def test_build_graph(
     assert m_report_callback.call_args.args[1] == 0
     assert m_report_callback.call_args.args[2] == 0
     assert m_report_callback.call_args.args[3] == len(expected_call_ids)
+
+    # Check the record callback calls.
+    assert len(m_record_callback.mock_calls) == len(expected_info["node_list"])
+    for record_id in expected_info["node_list"]:
+        assert (
+            call(ANY, testdata[record_id]) in m_record_callback.mock_calls
+        )  # ANY is a placeholder for the TaskGroup object passed to the callback function
