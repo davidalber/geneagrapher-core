@@ -28,6 +28,9 @@ types: mypy
 test:
 	poetry run pytest -m "not live" tests
 
+test-live:
+	poetry run pytest -m "live" tests
+
 all:
 
 clean:
