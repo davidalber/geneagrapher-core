@@ -25,4 +25,4 @@ jobs:
           poetry install
       - name: Live tests
         run: |
-          poetry run pytest -m "live" tests
+          make test-live
