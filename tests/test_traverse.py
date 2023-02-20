@@ -17,7 +17,7 @@ class TestLifecycleTracking:
         t = LifecycleTracking(start_nodes, s.report_back)
         assert t.todo == {ti.id: ti for ti in start_nodes}
         assert t.doing == {}
-        assert t._done == set()
+        assert t.done == set()
         assert t._report_callback == s.report_back
 
     @pytest.mark.parametrize(
@@ -130,7 +130,7 @@ class TestLifecycleTracking:
 
         await t.finish(s.rid2)
         assert t.doing == {}
-        assert t._done == {s.rid2}
+        assert t.done == {s.rid2}
         m_report_back.assert_called_once_with()
 
     @pytest.mark.asyncio

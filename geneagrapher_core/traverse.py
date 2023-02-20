@@ -44,7 +44,7 @@ class LifecycleTracking:
     ):
         self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
         self.doing: dict[RecordId, TraverseItem] = {}
-        self._done: set[RecordId] = set()
+        self.done: set[RecordId] = set()
         self._report_callback = report_callback
 
     @property
@@ -59,7 +59,7 @@ class LifecycleTracking:
         """Add the node to the `todo` set if it is not in todo, doing,
         or done already.
         """
-        if not (id in self.todo or id in self.doing or id in self._done):
+        if not (id in self.todo or id in self.doing or id in self.done):
             self.todo[id] = TraverseItem(id, direction)
             await self.report_back()
 
@@ -73,11 +73,11 @@ class LifecycleTracking:
         return item
 
     async def finish(self, id: RecordId) -> None:
-        """Move a record ID from the `doing` set to the `_done` set
-        and call the `report_back` callback function.
+        """Move a record ID from the `doing` set to the `done` set and
+        call the `report_back` callback function.
         """
         self.doing.pop(id)
-        self._done.add(id)
+        self.done.add(id)
         await self.report_back()
 
     async def report_back(self) -> None:
@@ -85,7 +85,7 @@ class LifecycleTracking:
         provided during initialization.
         """
         if self._report_callback is not None:
-            await self._report_callback(self.num_todo, len(self.doing), len(self._done))
+            await self._report_callback(self.num_todo, len(self.doing), len(self.done))
 
 
 async def build_graph(
