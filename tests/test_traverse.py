@@ -16,7 +16,7 @@ class TestLifecycleTracking:
         start_nodes = [TraverseItem(s.rid1, s.tda), TraverseItem(s.rid2, s.tda)]
         t = LifecycleTracking(start_nodes, s.report_back)
         assert t.todo == {ti.id: ti for ti in start_nodes}
-        assert t._doing == {}
+        assert t.doing == {}
         assert t._done == set()
         assert t._report_callback == s.report_back
 
@@ -40,7 +40,7 @@ class TestLifecycleTracking:
         expected: bool,
     ) -> None:
         t = LifecycleTracking(todo)
-        t._doing = doing
+        t.doing = doing
         assert t.all_done is expected
 
     @pytest.mark.parametrize(
@@ -120,16 +120,16 @@ class TestLifecycleTracking:
         next_rec = await t.start_next()
         assert next_rec in start_nodes
         assert t.todo == {sn.id: sn for sn in start_nodes if sn.id != next_rec.id}
-        assert t._doing == {sn.id: sn for sn in start_nodes if sn.id == next_rec.id}
+        assert t.doing == {sn.id: sn for sn in start_nodes if sn.id == next_rec.id}
 
     @pytest.mark.asyncio
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
     async def test_done(self, m_report_back: MagicMock) -> None:
         t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
-        t._doing[s.rid2] = TraverseItem(s.rid2, s.tda)
+        t.doing[s.rid2] = TraverseItem(s.rid2, s.tda)
 
         await t.done(s.rid2)
-        assert t._doing == {}
+        assert t.doing == {}
         assert t._done == {s.rid2}
         m_report_back.assert_called_once_with()
 

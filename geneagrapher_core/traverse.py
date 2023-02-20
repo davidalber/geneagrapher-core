@@ -43,13 +43,13 @@ class LifecycleTracking:
         report_callback: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
     ):
         self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
-        self._doing: dict[RecordId, TraverseItem] = {}
+        self.doing: dict[RecordId, TraverseItem] = {}
         self._done: set[RecordId] = set()
         self._report_callback = report_callback
 
     @property
     def all_done(self) -> bool:
-        return bool(self.num_todo == len(self._doing) == 0)
+        return bool(self.num_todo == len(self.doing) == 0)
 
     @property
     def num_todo(self) -> int:
@@ -59,24 +59,24 @@ class LifecycleTracking:
         """Add the node to the `todo` set if it is not in todo, doing,
         or done already.
         """
-        if not (id in self.todo or id in self._doing or id in self._done):
+        if not (id in self.todo or id in self.doing or id in self._done):
             self.todo[id] = TraverseItem(id, direction)
             await self.report_back()
 
     async def start_next(self) -> TraverseItem:
-        """Get a record ID from the `todo` set, add it to the `_doing`
+        """Get a record ID from the `todo` set, add it to the `doing`
         set, and call the `report_back` callback function.
         """
         (id, item) = self.todo.popitem()
-        self._doing[id] = item
+        self.doing[id] = item
         await self.report_back()
         return item
 
     async def done(self, id: RecordId) -> None:
-        """Move a record ID from the `_doing` set to the `_done` set
+        """Move a record ID from the `doing` set to the `_done` set
         and call the `report_back` callback function.
         """
-        self._doing.pop(id)
+        self.doing.pop(id)
         self._done.add(id)
         await self.report_back()
 
@@ -85,9 +85,7 @@ class LifecycleTracking:
         provided during initialization.
         """
         if self._report_callback is not None:
-            await self._report_callback(
-                self.num_todo, len(self._doing), len(self._done)
-            )
+            await self._report_callback(self.num_todo, len(self.doing), len(self._done))
 
 
 async def build_graph(
