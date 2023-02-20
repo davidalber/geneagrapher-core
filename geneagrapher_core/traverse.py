@@ -72,7 +72,7 @@ class LifecycleTracking:
         await self.report_back()
         return item
 
-    async def done(self, id: RecordId) -> None:
+    async def finish(self, id: RecordId) -> None:
         """Move a record ID from the `doing` set to the `_done` set
         and call the `report_back` callback function.
         """
@@ -151,7 +151,7 @@ async def build_graph(
     ) -> None:
         record = await get_record_inner(item.id, client, semaphore, cache)
 
-        await tracking.done(item.id)
+        await tracking.finish(item.id)
         if record is not None:
             ggraph["nodes"][item.id] = record
             if record_callback is not None:

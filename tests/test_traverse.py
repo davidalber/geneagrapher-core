@@ -124,11 +124,11 @@ class TestLifecycleTracking:
 
     @pytest.mark.asyncio
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    async def test_done(self, m_report_back: MagicMock) -> None:
+    async def test_finish(self, m_report_back: MagicMock) -> None:
         t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
         t.doing[s.rid2] = TraverseItem(s.rid2, s.tda)
 
-        await t.done(s.rid2)
+        await t.finish(s.rid2)
         assert t.doing == {}
         assert t._done == {s.rid2}
         m_report_back.assert_called_once_with()
