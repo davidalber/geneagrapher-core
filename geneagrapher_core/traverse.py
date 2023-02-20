@@ -95,12 +95,12 @@ async def build_graph(
     *,
     max_concurrency: int = 4,
     cache: Optional[Cache] = None,
+    record_callback: Optional[
+        Callable[[asyncio.TaskGroup, Record], Awaitable[None]]
+    ] = None,
     report_callback: Optional[
         Callable[[asyncio.TaskGroup, int, int, int], Awaitable[None]]
     ] = None,
-    record_callback: Optional[
-        Callable[[asyncio.TaskGroup, Record], Awaitable[None]]
-    ] = None
 ) -> Geneagraph:
     """Build a complete geneagraph using the ``start_nodes`` as the
     graph's leaf nodes.
@@ -108,8 +108,8 @@ async def build_graph(
     :param start_nodes: a list of nodes and direction from which to traverse from them
     :param max_concurrency: the maximum number of concurrent HTTP requests allowed
     :param cache: a cache object for getting and storing results
-    :param report_callback: callback function called to report graph-building progress
     :param record_callback: callback function called with record data as it is retrieved
+    :param report_callback: callback function called to report graph-building progress
 
     **Example**::
 

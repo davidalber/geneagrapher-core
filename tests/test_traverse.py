@@ -251,8 +251,8 @@ async def test_build_graph(
             start_nodes,
             max_concurrency=s.concurrency,
             cache=s.cache,
-            report_callback=m_report_callback,
             record_callback=m_record_callback,
+            report_callback=m_report_callback,
         )
         == expected
     )
