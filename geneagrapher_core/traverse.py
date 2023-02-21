@@ -97,6 +97,7 @@ async def build_graph(
     *,
     max_concurrency: int = 4,
     max_records: Optional[int] = None,
+    user_agent: Optional[str] = None,
     cache: Optional[Cache] = None,
     record_callback: Optional[
         Callable[[asyncio.TaskGroup, Record], Awaitable[None]]
@@ -110,6 +111,7 @@ async def build_graph(
 
     :param start_nodes: a list of nodes and direction from which to traverse from them
     :param max_concurrency: the maximum number of concurrent HTTP requests allowed
+    :param user_agent: a custom user agent string to use in HTTP requests
     :param cache: a cache object for getting and storing results
     :param record_callback: callback function called with record data as it is retrieved
     :param report_callback: callback function called to report graph-building progress
@@ -182,7 +184,11 @@ async def build_graph(
             start_nodes,
             None if report_callback is None else functools.partial(report_callback, tg),
         )
-        async with ClientSession("https://www.mathgenealogy.org") as client:
+        headers = None if user_agent is None else {"User-Agent": user_agent}
+
+        async with ClientSession(
+            "https://www.mathgenealogy.org", headers=headers
+        ) as client:
             while tracking.num_todo > 0:
                 item = await tracking.start_next()
 
