@@ -134,6 +134,13 @@ class TestLifecycleTracking:
         m_report_back.assert_called_once_with()
 
     @pytest.mark.asyncio
+    async def test_purge_todo(self) -> None:
+        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
+        assert t.todo == {s.rid1: TraverseItem(s.rid1, s.tda)}
+        await t.purge_todo()
+        assert t.todo == {}
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("report_callback", [None, AsyncMock()])
     async def test_report_back(self, report_callback: Optional[AsyncMock]) -> None:
         t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], report_callback)

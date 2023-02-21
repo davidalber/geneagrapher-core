@@ -80,6 +80,10 @@ class LifecycleTracking:
         self.done.add(id)
         await self.report_back()
 
+    async def purge_todo(self) -> None:
+        """Remove all todo work."""
+        self.todo.clear()
+
     async def report_back(self) -> None:
         """Call the reporting callback function that was optionally
         provided during initialization.
