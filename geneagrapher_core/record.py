@@ -75,7 +75,8 @@ async def get_record(
     """Get a single record. This is meant to be called for one-off
     requests. If the calling code is planning to get several records
     during its lifetime, it should instantiate a
-    :class:`aiohttp.ClientSession` object and call
+    :class:`aiohttp.ClientSession` object as
+    ``ClientSession("https://www.mathgenealogy.org")`` and call
     :func:`get_record_inner <get_record_inner>` instead.
 
     :param record_id: Math Genealogy Project ID of the record to retrieve
