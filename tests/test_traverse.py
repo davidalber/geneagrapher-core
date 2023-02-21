@@ -152,7 +152,7 @@ class TestLifecycleTracking:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "start_nodes,expected_graph_records,expected_call_ids,\
+    "start_nodes,max_records,expected_graph_records,expected_call_ids,\
 expected_num_report_callbacks",
     [
         (
@@ -160,6 +160,7 @@ expected_num_report_callbacks",
                 TraverseItem(RecordId(1), TraverseDirection.ADVISORS),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
+            None,
             [1, 2, 3, 4],
             [1, 2, 3, 4, 5],
             13,
@@ -169,6 +170,7 @@ expected_num_report_callbacks",
                 TraverseItem(RecordId(1), TraverseDirection.DESCENDANTS),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
+            None,
             [1, 2, 3, 6, 7, 8],
             [1, 2, 3, 5, 6, 7, 8, 9],
             22,
@@ -181,9 +183,36 @@ expected_num_report_callbacks",
                 ),
                 TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
             ],
+            None,
             [1, 2, 3, 4, 6, 7, 8],
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             25,
+        ),
+        (
+            [
+                TraverseItem(
+                    RecordId(1),
+                    TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS,
+                ),
+                TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
+            ],
+            7,
+            [1, 2, 3, 4, 6, 7, 8],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            25,
+        ),
+        (
+            [
+                TraverseItem(
+                    RecordId(1),
+                    TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS,
+                ),
+                TraverseItem(RecordId(2), TraverseDirection.ADVISORS),
+            ],
+            4,
+            [1, 2, 6, 7],
+            [1, 2, 3, 4, 5, 6, 7],
+            21,
         ),
     ],
 )
@@ -195,6 +224,7 @@ async def test_build_graph(
     m_get_record_inner: MagicMock,
     m_semaphore: MagicMock,
     start_nodes: List[TraverseItem],
+    max_records: Optional[int],
     expected_graph_records: List[int],
     expected_call_ids: List[int],
     expected_num_report_callbacks: int,
@@ -257,6 +287,7 @@ async def test_build_graph(
         await build_graph(
             start_nodes,
             max_concurrency=s.concurrency,
+            max_records=max_records,
             cache=s.cache,
             record_callback=m_record_callback,
             report_callback=m_report_callback,
