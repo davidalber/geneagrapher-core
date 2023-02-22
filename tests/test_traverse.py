@@ -7,7 +7,7 @@ from geneagrapher_core.traverse import (
 from geneagrapher_core.record import RecordId
 
 import pytest
-from typing import List, Optional
+from typing import List, Literal, Optional
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch, sentinel as s
 
 
@@ -153,7 +153,7 @@ class TestLifecycleTracking:
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "start_nodes,max_records,user_agent,expected_graph_records,expected_call_ids,\
-expected_num_report_callbacks",
+expected_num_report_callbacks,expected_status",
     [
         (
             [
@@ -165,6 +165,7 @@ expected_num_report_callbacks",
             [1, 2, 3, 4],
             [1, 2, 3, 4, 5],
             13,
+            "complete",
         ),
         (
             [
@@ -176,6 +177,7 @@ expected_num_report_callbacks",
             [1, 2, 3, 4],
             [1, 2, 3, 4, 5],
             13,
+            "complete",
         ),
         (
             [
@@ -187,6 +189,7 @@ expected_num_report_callbacks",
             [1, 2, 3, 6, 7, 8],
             [1, 2, 3, 5, 6, 7, 8, 9],
             22,
+            "complete",
         ),
         (
             [
@@ -201,6 +204,7 @@ expected_num_report_callbacks",
             [1, 2, 3, 4, 6, 7, 8],
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             25,
+            "complete",
         ),
         (
             [
@@ -215,6 +219,7 @@ expected_num_report_callbacks",
             [1, 2, 3, 4, 6, 7, 8],
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             25,
+            "complete",
         ),
         (
             [
@@ -229,6 +234,7 @@ expected_num_report_callbacks",
             [1, 2, 6, 7],
             [1, 2, 3, 4, 5, 6, 7],
             21,
+            "truncated",
         ),
     ],
 )
@@ -245,6 +251,7 @@ async def test_build_graph(
     expected_graph_records: List[int],
     expected_call_ids: List[int],
     expected_num_report_callbacks: int,
+    expected_status: Literal["complete", "truncated"],
 ) -> None:
     m_session = AsyncMock()
     m_client_session.return_value.__aenter__.return_value = m_session
@@ -298,6 +305,7 @@ async def test_build_graph(
     expected = {
         "start_nodes": [r.id for r in start_nodes],
         "nodes": {rid: testdata[rid] for rid in expected_graph_records},
+        "status": expected_status,
     }
 
     assert (

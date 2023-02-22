@@ -15,6 +15,7 @@ from typing import Awaitable, Callable, List, Literal, NamedTuple, Optional, Typ
 class Geneagraph(TypedDict):
     start_nodes: List[RecordId]
     nodes: dict[RecordId, Record]
+    status: Literal["complete", "truncated"]
 
 
 class TraverseDirection(Flag):
@@ -134,6 +135,7 @@ async def build_graph(
     ggraph: Geneagraph = {
         "start_nodes": [n.id for n in start_nodes],
         "nodes": {},
+        "status": "complete",
     }
 
     continue_event = asyncio.Event()
@@ -162,18 +164,20 @@ async def build_graph(
         record = await get_record_inner(item.id, client, semaphore, cache)
 
         await tracking.finish(item.id)
-        if record is not None and below_max_records():
-            ggraph["nodes"][item.id] = record
-            if record_callback is not None:
-                await record_callback(tg, record)
+        if record is not None:
+            if below_max_records():
+                ggraph["nodes"][item.id] = record
 
-            for td in (TraverseDirection.ADVISORS, TraverseDirection.DESCENDANTS):
-                if td in item.traverse_direction:
-                    await add_neighbor_work(record, td)
-        elif not below_max_records():
-            # No more records are being added to the result. Purge all
-            # to-do work.
-            await tracking.purge_todo()
+                if record_callback is not None:
+                    await record_callback(tg, record)
+
+                for td in (TraverseDirection.ADVISORS, TraverseDirection.DESCENDANTS):
+                    if td in item.traverse_direction:
+                        await add_neighbor_work(record, td)
+            else:
+                # The graph is now as large as it is allowed to be.
+                ggraph["status"] = "truncated"
+                await tracking.purge_todo()
 
         if tracking.all_done:
             # There's no more work to do. Signal the loop below.
