@@ -94,7 +94,7 @@ class LifecycleTracking:
 
 
 async def build_graph(
-    start_nodes: List[TraverseItem],
+    start_items: List[TraverseItem],
     *,
     http_semaphore: Optional[asyncio.Semaphore] = None,
     max_records: Optional[int] = None,
@@ -110,7 +110,7 @@ async def build_graph(
     """Build a complete geneagraph using the ``start_nodes`` as the
     graph's leaf nodes.
 
-    :param start_nodes: a list of nodes and direction from which to traverse from them
+    :param start_items: a list of nodes and direction from which to traverse from them
     :param http_semaphore: a semaphore to limit HTTP request concurrency
     :param max_records: the maximum number of records to include in the built graph
     :param user_agent: a custom user agent string to use in HTTP requests
@@ -122,18 +122,18 @@ async def build_graph(
 
         # Build a graph that contains Carl Friedrich Gauß (18231), his advisor tree,
         # Johann Friedrich Pfaff (18230), his advisor tree, and his descendant tree.
-        start_nodes = [
+        start_items = [
             TraverseItem(RecordId(18231), TraverseDirection.ADVISORS),
             TraverseItem(
                 RecordId(18230),
                 TraverseDirection.ADVISORS | TraverseDirection.DESCENDANTS
             ),
         ]
-        graph = await build_graph(start_nodes)
+        graph = await build_graph(start_items)
 
     """
     ggraph: Geneagraph = {
-        "start_nodes": [n.id for n in start_nodes],
+        "start_nodes": [n.id for n in start_items],
         "nodes": {},
         "status": "complete",
     }
@@ -185,7 +185,7 @@ async def build_graph(
 
     async with asyncio.TaskGroup() as tg:
         tracking = LifecycleTracking(
-            start_nodes,
+            start_items,
             None if report_callback is None else functools.partial(report_callback, tg),
         )
         headers = None if user_agent is None else {"User-Agent": user_agent}
