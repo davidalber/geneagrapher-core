@@ -238,13 +238,11 @@ expected_num_report_callbacks,expected_status",
         ),
     ],
 )
-@patch("geneagrapher_core.traverse.asyncio.Semaphore")
 @patch("geneagrapher_core.traverse.get_record_inner")
 @patch("geneagrapher_core.traverse.ClientSession")
 async def test_build_graph(
     m_client_session: MagicMock,
     m_get_record_inner: MagicMock,
-    m_semaphore: MagicMock,
     start_nodes: List[TraverseItem],
     max_records: Optional[int],
     user_agent: Optional[str],
@@ -256,6 +254,7 @@ async def test_build_graph(
     m_session = AsyncMock()
     m_client_session.return_value.__aenter__.return_value = m_session
 
+    m_http_semaphore = AsyncMock()
     m_report_callback = AsyncMock()
     m_record_callback = AsyncMock()
 
@@ -311,7 +310,7 @@ async def test_build_graph(
     assert (
         await build_graph(
             start_nodes,
-            max_concurrency=s.concurrency,
+            http_semaphore=m_http_semaphore,
             max_records=max_records,
             user_agent=user_agent,
             cache=s.cache,
@@ -324,12 +323,10 @@ async def test_build_graph(
     m_client_session.assert_called_once_with(
         "https://www.mathgenealogy.org", headers=expected_headers
     )
-    m_semaphore.assert_called_once_with(s.concurrency)
 
     assert len(m_get_record_inner.call_args_list) == len(expected_call_ids)
     for c in [
-        call(rid, m_session, m_semaphore.return_value, s.cache)
-        for rid in expected_call_ids
+        call(rid, m_session, m_http_semaphore, s.cache) for rid in expected_call_ids
     ]:
         assert c in m_get_record_inner.call_args_list
 

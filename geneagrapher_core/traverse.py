@@ -96,7 +96,7 @@ class LifecycleTracking:
 async def build_graph(
     start_nodes: List[TraverseItem],
     *,
-    max_concurrency: int = 4,
+    http_semaphore: Optional[asyncio.Semaphore] = None,
     max_records: Optional[int] = None,
     user_agent: Optional[str] = None,
     cache: Optional[Cache] = None,
@@ -111,7 +111,7 @@ async def build_graph(
     graph's leaf nodes.
 
     :param start_nodes: a list of nodes and direction from which to traverse from them
-    :param max_concurrency: the maximum number of concurrent HTTP requests allowed
+    :param http_semaphore: a semaphore to limit HTTP request concurrency
     :param user_agent: a custom user agent string to use in HTTP requests
     :param cache: a cache object for getting and storing results
     :param record_callback: callback function called with record data as it is retrieved
@@ -131,7 +131,6 @@ async def build_graph(
         graph = await build_graph(start_nodes)
 
     """
-    semaphore = asyncio.Semaphore(max_concurrency)
     ggraph: Geneagraph = {
         "start_nodes": [n.id for n in start_nodes],
         "nodes": {},
@@ -161,7 +160,7 @@ async def build_graph(
     async def fetch_and_process(
         item: TraverseItem, client: ClientSession, cache: Optional[Cache]
     ) -> None:
-        record = await get_record_inner(item.id, client, semaphore, cache)
+        record = await get_record_inner(item.id, client, http_semaphore, cache)
 
         await tracking.finish(item.id)
         if record is not None:
