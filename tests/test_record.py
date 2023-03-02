@@ -36,6 +36,7 @@ def test_has_record(test_record_ids: str) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("has_record", [False, True])
 @pytest.mark.parametrize("cache_hit", [False, True])
+@pytest.mark.parametrize("semaphore_is_none", [False, True])
 @patch("geneagrapher_core.record.get_advisors")
 @patch("geneagrapher_core.record.get_descendants")
 @patch("geneagrapher_core.record.get_year")
@@ -43,7 +44,9 @@ def test_has_record(test_record_ids: str) -> None:
 @patch("geneagrapher_core.record.get_name")
 @patch("geneagrapher_core.record.has_record")
 @patch("geneagrapher_core.record.fetch_document")
+@patch("geneagrapher_core.record.fake_semaphore")
 async def test_get_record_inner(
+    m_fake_semaphore: AsyncMock,
     m_fetch_document: MagicMock,
     m_has_record: MagicMock,
     m_get_name: MagicMock,
@@ -51,6 +54,7 @@ async def test_get_record_inner(
     m_get_year: MagicMock,
     m_get_descendants: MagicMock,
     m_get_advisors: MagicMock,
+    semaphore_is_none: bool,
     has_record: bool,
     cache_hit: bool,
 ) -> None:
@@ -62,13 +66,16 @@ async def test_get_record_inner(
         (CacheResult.HIT, s.cache_record) if cache_hit else (CacheResult.MISS, None)
     )
 
-    m_http_semaphore = AsyncMock()
+    m_http_semaphore = None if semaphore_is_none else AsyncMock()
 
     record = await get_record_inner(s.rid, s.client_session, m_http_semaphore, m_cache)
 
     if cache_hit:
         assert record is s.cache_record
-        m_http_semaphore.__aenter__.assert_not_called()
+        m_fake_semaphore.return_value.__aenter__.assert_not_called()
+        if m_http_semaphore is not None:
+            m_http_semaphore.__aenter__.assert_not_called()
+
         m_fetch_document.assert_not_called()
         m_has_record.assert_not_called()
         m_get_name.assert_not_called()
@@ -79,7 +86,12 @@ async def test_get_record_inner(
         m_cache.set.assert_not_called()
 
     else:
-        m_http_semaphore.__aenter__.assert_called_once_with()
+        if m_http_semaphore is None:
+            m_fake_semaphore.return_value.__aenter__.assert_called_once_with()
+        else:
+            m_http_semaphore.__aenter__.assert_called_once_with()
+            m_fake_semaphore.return_value.__aenter__.assert_not_called()
+
         m_fetch_document.assert_called_once_with(s.rid, s.client_session)
         m_has_record.assert_called_once_with(m_soup)
 
