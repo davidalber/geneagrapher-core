@@ -94,7 +94,7 @@ async def get_record(
 async def get_record_inner(
     record_id: RecordId,
     client: ClientSession,
-    semaphore: Optional[asyncio.Semaphore] = None,
+    http_semaphore: Optional[asyncio.Semaphore] = None,
     cache: Optional[Cache] = None,
 ) -> Optional[Record]:
     """Get a single record using the provided
@@ -103,7 +103,7 @@ async def get_record_inner(
 
     :param record_id: Math Genealogy Project ID of the record to retrieve
     :param client: a client session object with which to make HTTP requests
-    :param semaphore: a semaphore to cap the HTTP request concurrency
+    :param http_semaphore: a semaphore to limit HTTP request concurrency
     :param cache: a cache object for getting and storing results
 
     """
@@ -112,7 +112,7 @@ async def get_record_inner(
         if status is CacheResult.HIT:
             return record
 
-    async with semaphore or fake_semaphore():
+    async with http_semaphore or fake_semaphore():
         soup: BeautifulSoup = await fetch_document(record_id, client)
 
     if not has_record(soup):
