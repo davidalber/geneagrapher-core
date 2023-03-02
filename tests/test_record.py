@@ -47,7 +47,7 @@ def test_has_record(test_record_ids: str) -> None:
 @patch("geneagrapher_core.record.fake_semaphore")
 async def test_get_record_inner(
     m_fake_semaphore: AsyncMock,
-    m_fetch_document: MagicMock,
+    m_fetch_document: AsyncMock,
     m_has_record: MagicMock,
     m_get_name: MagicMock,
     m_get_institution: MagicMock,
