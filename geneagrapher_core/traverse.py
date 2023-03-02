@@ -112,6 +112,7 @@ async def build_graph(
 
     :param start_nodes: a list of nodes and direction from which to traverse from them
     :param http_semaphore: a semaphore to limit HTTP request concurrency
+    :param max_records: the maximum number of records to include in the built graph
     :param user_agent: a custom user agent string to use in HTTP requests
     :param cache: a cache object for getting and storing results
     :param record_callback: callback function called with record data as it is retrieved
