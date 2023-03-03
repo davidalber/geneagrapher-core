@@ -33,20 +33,30 @@ class TraverseItem(NamedTuple):
     traverse_direction: TraverseDirection
 
 
+class MaxRecordsException(Exception):
+    pass
+
+
 class LifecycleTracking:
     """This class is used to track the state of records during the
     graph-building process.
     """
 
+    PROCESSING_OVERAGE_BUFFER = 10
+
     def __init__(
         self,
         start_items: List[TraverseItem],
+        max_records: Optional[int],
         report_callback: Optional[Callable[[int, int, int], Awaitable[None]]] = None,
     ):
         self.todo: dict[RecordId, TraverseItem] = {ti.id: ti for ti in start_items}
         self.doing: dict[RecordId, TraverseItem] = {}
         self.done: set[RecordId] = set()
+        self.max_records = max_records
         self._report_callback = report_callback
+        self.num_records_received = 0
+        self.finished_record_event = asyncio.Event()
 
     @property
     def all_done(self) -> bool:
@@ -55,6 +65,14 @@ class LifecycleTracking:
     @property
     def num_todo(self) -> int:
         return len(self.todo)
+
+    @property
+    def num_doing(self) -> int:
+        return len(self.doing)
+
+    @property
+    def potential_fetched_records(self) -> int:
+        return self.num_doing + self.num_records_received
 
     async def create(self, id: RecordId, direction: TraverseDirection) -> None:
         """Add the node to the `todo` set if it is not in todo, doing,
@@ -73,17 +91,40 @@ class LifecycleTracking:
         await self.report_back()
         return item
 
-    async def finish(self, id: RecordId) -> None:
+    async def finish(self, id: RecordId, got_record: bool) -> None:
         """Move a record ID from the `doing` set to the `done` set and
-        call the `report_back` callback function.
+        call the `report_back` callback function. Record if a record
+        was received.
         """
         self.doing.pop(id)
         self.done.add(id)
+
+        if got_record:
+            self.num_records_received += 1
+
+        self.finished_record_event.set()
+
         await self.report_back()
 
-    async def purge_todo(self) -> None:
-        """Remove all todo work."""
-        self.todo.clear()
+    async def process_another(self) -> None:
+        """Limit the number of records being requested to an amount
+        slightly more than the maximum number of records. This avoids
+        situations where hundreds or thousands of additional records
+        are being processed when the maximum number of records has
+        been reached.
+        """
+        if self.max_records is not None:
+            while (
+                self.potential_fetched_records
+                >= self.max_records + LifecycleTracking.PROCESSING_OVERAGE_BUFFER
+            ):
+                # If max_records has been reached, raise an exception.
+                if self.num_records_received >= self.max_records:
+                    raise MaxRecordsException()
+
+                # Wait until another fetch operation has finished.
+                self.finished_record_event.clear()
+                await self.finished_record_event.wait()
 
     async def report_back(self) -> None:
         """Call the reporting callback function that was optionally
@@ -163,7 +204,7 @@ async def build_graph(
     ) -> None:
         record = await get_record_inner(item.id, client, http_semaphore, cache)
 
-        await tracking.finish(item.id)
+        await tracking.finish(item.id, record is not None)
         if record is not None:
             if below_max_records():
                 ggraph["nodes"][item.id] = record
@@ -177,7 +218,6 @@ async def build_graph(
             else:
                 # The graph is now as large as it is allowed to be.
                 ggraph["status"] = "truncated"
-                await tracking.purge_todo()
 
         if tracking.all_done:
             # There's no more work to do. Signal the loop below.
@@ -186,6 +226,7 @@ async def build_graph(
     async with asyncio.TaskGroup() as tg:
         tracking = LifecycleTracking(
             start_items,
+            max_records,
             None if report_callback is None else functools.partial(report_callback, tg),
         )
         headers = None if user_agent is None else {"User-Agent": user_agent}
@@ -194,6 +235,12 @@ async def build_graph(
             "https://www.mathgenealogy.org", headers=headers
         ) as client:
             while tracking.num_todo > 0:
+                try:
+                    await tracking.process_another()
+                except MaxRecordsException:
+                    # We're done.
+                    break
+
                 item = await tracking.start_next()
 
                 # Create a task to fetch and process the record.

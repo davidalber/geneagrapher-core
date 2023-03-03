@@ -1,5 +1,6 @@
 from geneagrapher_core.traverse import (
     LifecycleTracking,
+    MaxRecordsException,
     TraverseDirection,
     TraverseItem,
     build_graph,
@@ -8,16 +9,25 @@ from geneagrapher_core.record import RecordId
 
 import pytest
 from typing import List, Literal, Optional
-from unittest.mock import ANY, AsyncMock, MagicMock, call, patch, sentinel as s
+from unittest.mock import (
+    ANY,
+    AsyncMock,
+    MagicMock,
+    PropertyMock,
+    call,
+    patch,
+    sentinel as s,
+)
 
 
 class TestLifecycleTracking:
     def test_init(self) -> None:
         start_nodes = [TraverseItem(s.rid1, s.tda), TraverseItem(s.rid2, s.tda)]
-        t = LifecycleTracking(start_nodes, s.report_back)
+        t = LifecycleTracking(start_nodes, s.max_records, s.report_back)
         assert t.todo == {ti.id: ti for ti in start_nodes}
         assert t.doing == {}
         assert t.done == set()
+        assert t.max_records == s.max_records
         assert t._report_callback == s.report_back
 
     @pytest.mark.parametrize(
@@ -39,7 +49,7 @@ class TestLifecycleTracking:
         doing: dict[RecordId, TraverseItem],
         expected: bool,
     ) -> None:
-        t = LifecycleTracking(todo)
+        t = LifecycleTracking(todo, s.max_records)
         t.doing = doing
         assert t.all_done is expected
 
@@ -52,8 +62,67 @@ class TestLifecycleTracking:
         ],
     )
     def test_num_todo(self, todo: List[TraverseItem], expected: int) -> None:
-        t = LifecycleTracking(todo)
+        t = LifecycleTracking(todo, s.max_records)
         assert t.num_todo == expected
+
+    @pytest.mark.parametrize(
+        "doing,expected",
+        [
+            ({}, 0),
+            ({s.rid1: TraverseItem(s.rid1, s.tda)}, 1),
+            (
+                {
+                    s.rid1: TraverseItem(s.rid1, s.tda),
+                    s.rid2: TraverseItem(s.rid2, s.tda),
+                },
+                2,
+            ),
+        ],
+    )
+    def test_num_doing(
+        self,
+        doing: dict[RecordId, TraverseItem],
+        expected: int,
+    ) -> None:
+        t = LifecycleTracking([], s.max_records)
+        t.doing = doing
+        assert t.num_doing == expected
+
+    @pytest.mark.parametrize(
+        "doing,num_records_received,expected",
+        [
+            ({}, 0, 0),
+            ({}, 14, 14),
+            ({s.rid1: TraverseItem(s.rid1, s.tda)}, 0, 1),
+            ({s.rid1: TraverseItem(s.rid1, s.tda)}, 13, 14),
+            (
+                {
+                    s.rid1: TraverseItem(s.rid1, s.tda),
+                    s.rid2: TraverseItem(s.rid2, s.tda),
+                },
+                0,
+                2,
+            ),
+            (
+                {
+                    s.rid1: TraverseItem(s.rid1, s.tda),
+                    s.rid2: TraverseItem(s.rid2, s.tda),
+                },
+                12,
+                14,
+            ),
+        ],
+    )
+    def test_potential_fetched_records(
+        self,
+        doing: dict[RecordId, TraverseItem],
+        num_records_received: int,
+        expected: int,
+    ) -> None:
+        t = LifecycleTracking([], s.max_records)
+        t.doing = doing
+        t.num_records_received = num_records_received
+        assert t.potential_fetched_records == expected
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -108,14 +177,14 @@ class TestLifecycleTracking:
         new_direction: TraverseDirection,
         final_todo: dict[RecordId, TraverseItem],
     ) -> None:
-        t = LifecycleTracking(start_nodes)
+        t = LifecycleTracking(start_nodes, s.max_records)
         await t.create(new_node, new_direction)
         assert t.todo == final_todo
 
     @pytest.mark.asyncio
     async def test_start_next(self) -> None:
         start_nodes = [TraverseItem(s.rid1, s.tda), TraverseItem(s.rid2, s.tda)]
-        t = LifecycleTracking(start_nodes)
+        t = LifecycleTracking(start_nodes, s.max_records)
 
         next_rec = await t.start_next()
         assert next_rec in start_nodes
@@ -123,27 +192,77 @@ class TestLifecycleTracking:
         assert t.doing == {sn.id: sn for sn in start_nodes if sn.id == next_rec.id}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "got_record,expected_num_records_received",
+        ([False, 0], [True, 1]),
+    )
     @patch("geneagrapher_core.traverse.LifecycleTracking.report_back")
-    async def test_finish(self, m_report_back: MagicMock) -> None:
-        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
+    async def test_finish(
+        self,
+        m_report_back: MagicMock,
+        got_record: bool,
+        expected_num_records_received: int,
+    ) -> None:
+        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], s.max_records)
         t.doing[s.rid2] = TraverseItem(s.rid2, s.tda)
 
-        await t.finish(s.rid2)
+        await t.finish(s.rid2, got_record)
         assert t.doing == {}
         assert t.done == {s.rid2}
+        assert t.num_records_received == expected_num_records_received
         m_report_back.assert_called_once_with()
 
     @pytest.mark.asyncio
-    async def test_purge_todo(self) -> None:
-        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)])
-        assert t.todo == {s.rid1: TraverseItem(s.rid1, s.tda)}
-        await t.purge_todo()
-        assert t.todo == {}
+    @pytest.mark.parametrize(
+        "max_records,num_records_received,num_potential_fetched_records,expected_num_fre_clear_calls,\
+expected_num_fre_wait_calls,expect_exception",
+        (
+            [None, 0, (1000, 2000), 0, 0, False],
+            [10, 0, (19,), 0, 0, False],
+            [10, 0, (20, 19), 1, 1, False],
+            [10, 10, (20, 19), 0, 0, True],
+            [10, 0, (20, 21, 19), 2, 2, False],
+        ),
+    )
+    @patch.object(
+        LifecycleTracking, "potential_fetched_records", new_callable=PropertyMock
+    )
+    async def test_process_another(
+        self,
+        m_potential_fetched_records: MagicMock,
+        max_records: int,
+        num_records_received: int,
+        num_potential_fetched_records: List[int],
+        expected_num_fre_clear_calls: int,
+        expected_num_fre_wait_calls: int,
+        expect_exception: bool,
+    ) -> None:
+        m_potential_fetched_records.side_effect = num_potential_fetched_records
+
+        t = LifecycleTracking([], max_records)
+        t.num_records_received = num_records_received
+        t.finished_record_event = MagicMock()
+        t.finished_record_event.wait = AsyncMock()
+        if expect_exception:
+            with pytest.raises(MaxRecordsException):
+                await t.process_another()
+        else:
+            await t.process_another()
+        assert (
+            len(t.finished_record_event.clear.call_args_list)
+            == expected_num_fre_clear_calls
+        )
+        assert (
+            len(t.finished_record_event.wait.call_args_list)
+            == expected_num_fre_wait_calls
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("report_callback", [None, AsyncMock()])
     async def test_report_back(self, report_callback: Optional[AsyncMock]) -> None:
-        t = LifecycleTracking([TraverseItem(s.rid1, s.tda)], report_callback)
+        t = LifecycleTracking(
+            [TraverseItem(s.rid1, s.tda)], s.max_records, report_callback
+        )
 
         await t.report_back()
         if report_callback is not None:
@@ -232,8 +351,8 @@ expected_num_report_callbacks,expected_status",
             4,
             None,
             [1, 2, 6, 7],
-            [1, 2, 3, 4, 5, 6, 7],
-            21,
+            [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            25,
             "truncated",
         ),
     ],
