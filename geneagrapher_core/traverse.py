@@ -223,17 +223,19 @@ async def build_graph(
             # There's no more work to do. Signal the loop below.
             continue_event.set()
 
-    async with asyncio.TaskGroup() as tg:
-        tracking = LifecycleTracking(
-            start_items,
-            max_records,
-            None if report_callback is None else functools.partial(report_callback, tg),
-        )
-        headers = None if user_agent is None else {"User-Agent": user_agent}
+    headers = None if user_agent is None else {"User-Agent": user_agent}
+    async with ClientSession(
+        "https://www.mathgenealogy.org", headers=headers
+    ) as client:
 
-        async with ClientSession(
-            "https://www.mathgenealogy.org", headers=headers
-        ) as client:
+        async with asyncio.TaskGroup() as tg:
+            tracking = LifecycleTracking(
+                start_items,
+                max_records,
+                None
+                if report_callback is None
+                else functools.partial(report_callback, tg),
+            )
             while tracking.num_todo > 0:
                 try:
                     await tracking.process_another()
