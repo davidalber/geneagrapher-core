@@ -74,6 +74,10 @@ class LifecycleTracking:
     def potential_fetched_records(self) -> int:
         return self.num_doing + self.num_records_received
 
+    async def purge_todo(self) -> None:
+        self.todo.clear()
+        await self.report_back()
+
     async def create(self, id: RecordId, direction: TraverseDirection) -> None:
         """Add the node to the `todo` set if it is not in todo, doing,
         or done already.
@@ -241,6 +245,7 @@ async def build_graph(
                     await tracking.process_another()
                 except MaxRecordsException:
                     # We're done.
+                    await tracking.purge_todo()
                     break
 
                 item = await tracking.start_next()
