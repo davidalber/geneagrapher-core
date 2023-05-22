@@ -1,3 +1,8 @@
+# 0.1.1
+Released 22-May-2023
+
+- Extract promotors and co-promotors as advisors (#2).
+
 # 0.1.0
 Released 07-Apr-2023
 
