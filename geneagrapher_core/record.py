@@ -200,12 +200,16 @@ def get_descendants(soup: BeautifulSoup) -> List[int]:
 def get_advisors(soup: BeautifulSoup) -> List[int]:
     """Return the set of advisors.
 
-    Rarely, a record has multiple groups of advisors (e.g.,
-    https://www.mathgenealogy.org/id.php?id=17864). In this case,
-    capture all of the advisors from all groups..
+    Rarely:
+      - A record has multiple groups of advisors (e.g.,
+        https://www.mathgenealogy.org/id.php?id=17864). In this case,
+        capture all of the advisors from all groups.
+      - A record has promotors and co-promotors (e.g.,
+        https://www.mathgenealogy.org/id.php?id=51506). Capture
+        promotors and co-promotors as advisors.
     """
     return [
         extract_id(info.find_next())
-        for info in soup.find_all(string=re.compile("Advisor"))
+        for info in soup.find_all(string=re.compile("(Advisor|Promotor)"))
         if "Advisor: Unknown" not in info
     ]

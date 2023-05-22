@@ -1,0 +1,9 @@
+is_valid = true
+name = "Harry Matthijs Buhrman"
+institution = "Universiteit van Amsterdam"
+year = 1993
+descendants = [
+  240289, 295390, 158219, 66048, 295426, 165088, 251184, 295391, 95129, 204461,
+  295555, 210719, 77144, 133796, 257711, 128790, 117466, 243367
+]
+advisors = [ 51477, 51475, 32787 ]
