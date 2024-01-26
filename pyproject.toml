@@ -27,7 +27,7 @@ pytest-asyncio = "^0.20.3"
 optional = true
 
 [tool.poetry.group.examples.dependencies]
-redis = "^4.4.2"
+redis = "^4.6.0"
 
 
 [tool.poetry.group.docs.dependencies]

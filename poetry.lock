@@ -984,18 +984,18 @@ files = [
 
 [[package]]
 name = "redis"
-version = "4.4.2"
+version = "4.6.0"
 description = "Python client for Redis database and key-value store"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "redis-4.4.2-py3-none-any.whl", hash = "sha256:e6206448e2f8a432871d07d432c13ed6c2abcf6b74edb436c99752b1371be387"},
-    {file = "redis-4.4.2.tar.gz", hash = "sha256:a010f6cb7378065040a02839c3f75c7e0fb37a87116fb4a95be82a95552776c7"},
+    {file = "redis-4.6.0-py3-none-any.whl", hash = "sha256:e2b03db868160ee4591de3cb90d40ebb50a90dd302138775937f6a42b7ed183c"},
+    {file = "redis-4.6.0.tar.gz", hash = "sha256:585dc516b9eb042a619ef0a39c3d7d55fe81bdb4df09a52c9cdde0d07bf1aa7d"},
 ]
 
 [package.dependencies]
-async-timeout = ">=4.0.2"
+async-timeout = {version = ">=4.0.2", markers = "python_full_version <= \"3.11.2\""}
 
 [package.extras]
 hiredis = ["hiredis (>=1.0.0)"]
