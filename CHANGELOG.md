@@ -1,3 +1,9 @@
+# 0.1.2
+Release 26-Jan-2024
+
+- Updated dependency versions to resolve Dependabot alerts.
+- Updated GitHub Actions workflow dependencies to use Node 20.
+
 # 0.1.1
 Released 22-May-2023
 
