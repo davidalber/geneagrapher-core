@@ -38,3 +38,32 @@ Several development commands are runnable with `make`:
 - `make check` does code formatting (checking, not modifying),
   linting, type checking, and testing in one command; if this command
   does not pass, CI will not pass
+
+## Releasing New Versions
+
+1. Increase the version in pyproject.toml (e.g., ed80c2c).
+1. Add an entry for the new version in CHANGELOG.md (e.g., bf2931a).
+1. Push changes.
+1. Tag the new version with message "Release VERSION".
+   ```bash
+   $ git tag -s vVERSION COMMIT_SHA
+   ```
+1. Push the tag.
+   ```bash
+   $ git push origin vVERSION
+   ```
+1. Build the distribution.
+   ```bash
+   $ poetry build
+   ```
+1. Publish release to Test PyPI (this assumes that Poetry has been
+   configured with the Test PyPI URL).
+   ```bash
+   $ poetry publish -r testpypi
+   ```
+1. Publish release to PyPI.
+   ```bash
+   $ poetry publish
+   ```
+1. Create [new
+   release](https://github.com/davidalber/geneagrapher-core/releases/new).
