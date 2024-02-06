@@ -41,8 +41,8 @@ Several development commands are runnable with `make`:
 
 ## Releasing New Versions
 
-1. Increase the version in pyproject.toml (e.g., ed80c2c).
-1. Add an entry for the new version in CHANGELOG.md (e.g., bf2931a).
+1. Increase the version in pyproject.toml (e.g., [ed80c2c](https://github.com/davidalber/geneagrapher-core/commit/ed80c2c568605f0eab3c3b8a9bf9d7d14aaf1495)).
+1. Add an entry for the new version in CHANGELOG.md (e.g., [bf2931a](https://github.com/davidalber/geneagrapher-core/commit/bf2931a2b602c692cf690dd55b0809489c457e7c)).
 1. Push changes.
 1. Tag the new version with message "Release VERSION".
    ```bash
