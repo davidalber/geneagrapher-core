@@ -12,7 +12,7 @@ packages = [{include = "geneagrapher_core"}]
 python = "^3.11"
 beautifulsoup4 = "^4.11.1"
 types-beautifulsoup4 = "^4.11.6.4"
-aiohttp = "^3.9.1"
+aiohttp = "^3.9.3"
 aiodns = "^3.0.0"
 
 
