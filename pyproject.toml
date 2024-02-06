@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geneagrapher-core"
-version = "0.1.2"
+version = "0.1.3"
 description = "Functions for getting records and building graphs from the Math Genealogy Project."
 license = "MIT"
 authors = ["David Alber <alber.david@gmail.com>"]
