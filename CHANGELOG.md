@@ -1,3 +1,8 @@
+# 0.1.3
+Released 06-Feb-2024
+
+- Update aiohttp to resolve Dependabot alerts.
+
 # 0.1.2
 Released 26-Jan-2024
 
