@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "geneagrapher-core"
-copyright = "2023, David Alber"
+copyright = "2024, David Alber"
 author = "David Alber"
 release = "0.1.0"
 
