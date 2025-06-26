@@ -1,3 +1,8 @@
+# 0.1.4
+Released 26-Jun-2025
+
+- Manually add MGP intermediate SSL certificates to request (#5).
+
 # 0.1.3
 Released 06-Feb-2024
 
