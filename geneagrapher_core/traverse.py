@@ -5,11 +5,33 @@ from geneagrapher_core.record import (
     get_record_inner,
 )
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, TCPConnector
 import asyncio
 from enum import Flag, auto
 import functools
+from pathlib import Path
+import ssl
 from typing import Awaitable, Callable, List, Literal, NamedTuple, Optional, TypedDict
+
+
+def build_intermediate_connector() -> TCPConnector:
+    """Build a connector object to be used by aiohttp that includes intermediate
+    certificates needed to currently validate the Math Genealogy Project SSL
+    certificate.
+
+    This was added for #5 and can hopefully be removed in the future.
+    """
+    current_directory_path = Path(__file__).absolute().parent
+    intermediate_cert_path = current_directory_path / "mathgenealogy-intermediate.pem"
+
+    # Create a default SSL context.
+    ssl_context = ssl.create_default_context()
+
+    # Load the intermediate certificate. This adds it to the chain of trust.
+    ssl_context.load_verify_locations(cafile=intermediate_cert_path)
+
+    # Create a TCPConnector with our custom SSL context.
+    return TCPConnector(ssl=ssl_context)
 
 
 class Geneagraph(TypedDict):
@@ -229,7 +251,9 @@ async def build_graph(
 
     headers = None if user_agent is None else {"User-Agent": user_agent}
     async with ClientSession(
-        "https://www.mathgenealogy.org", headers=headers
+        "https://www.mathgenealogy.org",
+        headers=headers,
+        connector=build_intermediate_connector(),
     ) as client:
 
         async with asyncio.TaskGroup() as tg:

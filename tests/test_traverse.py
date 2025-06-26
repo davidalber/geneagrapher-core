@@ -358,9 +358,11 @@ expected_num_report_callbacks,expected_status",
     ],
 )
 @patch("geneagrapher_core.traverse.get_record_inner")
+@patch("geneagrapher_core.traverse.build_intermediate_connector")
 @patch("geneagrapher_core.traverse.ClientSession")
 async def test_build_graph(
     m_client_session: MagicMock,
+    m_build_intermediate_connector: MagicMock,
     m_get_record_inner: MagicMock,
     start_nodes: List[TraverseItem],
     max_records: Optional[int],
@@ -416,6 +418,7 @@ async def test_build_graph(
         },
         9: None,
     }
+    m_build_intermediate_connector.return_value = s.connector
     m_get_record_inner.side_effect = (
         lambda record_id, client, semaphore, cache: testdata[record_id]
     )
@@ -440,7 +443,7 @@ async def test_build_graph(
     )
     expected_headers = None if user_agent is None else {"User-Agent": user_agent}
     m_client_session.assert_called_once_with(
-        "https://www.mathgenealogy.org", headers=expected_headers
+        "https://www.mathgenealogy.org", headers=expected_headers, connector=s.connector
     )
 
     assert len(m_get_record_inner.call_args_list) == len(expected_call_ids)
